@@ -15,7 +15,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
     app.at("/login").post(auth::login);
 
-    app.listen("127.0.0.1:4040").await?;
+    app.listen("127.0.0.1:3000").await?;
 
     Ok(())
 }
