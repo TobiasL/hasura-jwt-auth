@@ -1,9 +1,10 @@
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
-mod auth;
 mod health;
-mod sign;
+mod jwt;
+mod login;
+mod register;
 mod state;
 
 fn get_listen_address() -> String {
@@ -17,21 +18,29 @@ fn get_listen_address() -> String {
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
 
-    let db_url = env::var("DATABASE_URL").map_err(|_err| format!("Env variable DATABASE_URL is not set")).unwrap();
+    let db_url = env::var("DATABASE_URL")
+        .map_err(|_err| format!("Env variable DATABASE_URL is not set"))
+        .unwrap();
 
     let pg_pool = PgPoolOptions::new()
-            .max_connections(5)
-            .connect(&db_url)
-            .await?;
-    let mut app = tide::with_state(state::State {
-        db: pg_pool,
-    });
+        .max_connections(5)
+        .connect(&db_url)
+        .await?;
 
-    env::var("JWT_SECRET").map_err(|_err| format!("Env variable JWT_SECRET is not set")).unwrap();
+    sqlx::migrate!().run(&pg_pool).await?;
+
+    let mut app = tide::with_state(state::State { db: pg_pool });
+
+    env::var("JWT_SECRET")
+        .map_err(|_err| format!("Env variable JWT_SECRET is not set"))
+        .unwrap();
 
     app.at("/health").get(health::health);
-    app.at("/sign").get(sign::sign);
-    app.at("/login").post(auth::login);
+
+    app.at("/register").post(register::register);
+    app.at("/login").post(login::login);
+    // app.at("/logout").post(login::login);
+    // app.at("/refresh").post(login::login);
 
     let listen_address = get_listen_address();
 
