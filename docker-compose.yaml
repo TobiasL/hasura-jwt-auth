@@ -11,3 +11,13 @@ services:
       POSTGRES_DB: auth_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespassword
+
+  auth:
+    container_name: auth
+    build: ./
+    restart: always
+    ports:
+    - "4444:4444"
+    environment:
+      JWT_SECRET: test123
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/auth_db

@@ -10,24 +10,24 @@ mod state;
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
 
-    let db_url = "postgres://postgres:postgrespassword@127.0.0.1:5432/local_db";
+    let db_url = env::var("DATABASE_URL").map_err(|_err| format!("Env variable DATABASE_URL is not set")).unwrap();
 
-    let mut app = tide::with_state(state::State {
-        db: PgPoolOptions::new()
+    let pg_pool = PgPoolOptions::new()
             .max_connections(5)
-            .connect(db_url)
-            .await?,
+            .connect(&db_url)
+            .await?;
+    let mut app = tide::with_state(state::State {
+        db: pg_pool,
     });
 
-    // TODO: Exit more cleanly if it's not set.
-    env::var("JWT_SECRET").unwrap();
+    env::var("JWT_SECRET").map_err(|_err| format!("Env variable JWT_SECRET is not set")).unwrap();
 
     app.at("/health").get(health::health);
     app.at("/sign").get(sign::sign);
     app.at("/login").post(auth::login);
 
     // TODO: Add the ability to override the port with env variable.
-    app.listen("127.0.0.1:4444").await?;
+    app.listen("0.0.0.0:4444").await?;
 
     Ok(())
 }
