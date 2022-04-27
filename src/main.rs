@@ -1,10 +1,8 @@
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 
-mod health;
 mod jwt;
-mod login;
-mod register;
+mod routes;
 mod state;
 
 fn get_listen_address() -> String {
@@ -35,10 +33,10 @@ async fn main() -> Result<(), sqlx::Error> {
         .map_err(|_err| format!("Env variable JWT_SECRET is not set"))
         .unwrap();
 
-    app.at("/health").get(health::health);
+    app.at("/health").get(routes::health::health);
 
-    app.at("/register").post(register::register);
-    app.at("/login").post(login::login);
+    app.at("/register").post(routes::register::register);
+    app.at("/login").post(routes::login::login);
     // app.at("/logout").post(login::login);
     // app.at("/refresh").post(login::login);
 

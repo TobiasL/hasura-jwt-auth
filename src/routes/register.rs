@@ -11,16 +11,17 @@ struct LoginCredentials {
     email: String,
     password: String,
 }
-const ADD_USER_QUERY: &str = "
-  INSERT INTO users (email, password_hash, name)
-  VALUES ($1, $2, $3)
-  RETURNING id, default_role";
 
 #[derive(Serialize, sqlx::Type, sqlx::FromRow)]
 struct LoggedInUser {
     id: Uuid,
     default_role: String,
 }
+
+const ADD_USER_QUERY: &str = "
+  INSERT INTO users (email, password_hash, name)
+  VALUES ($1, $2, $3)
+  RETURNING id, default_role";
 
 pub async fn register(mut req: tide::Request<state::State>) -> tide::Result {
     let db = req.state().db.clone();
