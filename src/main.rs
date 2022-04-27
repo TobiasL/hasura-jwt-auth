@@ -6,6 +6,13 @@ mod health;
 mod sign;
 mod state;
 
+fn get_listen_address() -> String {
+    let host = env::var("HOST").unwrap_or("0.0.0.0".to_string());
+    let port = env::var("PORT").unwrap_or("80".to_string());
+
+    format!("{host}:{port}")
+}
+
 #[async_std::main]
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
@@ -26,8 +33,9 @@ async fn main() -> Result<(), sqlx::Error> {
     app.at("/sign").get(sign::sign);
     app.at("/login").post(auth::login);
 
-    // TODO: Add the ability to override the port with env variable.
-    app.listen("0.0.0.0:4444").await?;
+    let listen_address = get_listen_address();
+
+    app.listen(listen_address).await?;
 
     Ok(())
 }
