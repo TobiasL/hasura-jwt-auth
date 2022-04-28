@@ -25,6 +25,7 @@ const ADD_USER_QUERY: &str = "
 
 pub async fn register(mut req: tide::Request<state::State>) -> tide::Result {
     let db = req.state().db.clone();
+    let jwt_secret = req.state().jwt_secret.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
     let hashed_password = hash(credentials.password, 10)?;
@@ -36,7 +37,7 @@ pub async fn register(mut req: tide::Request<state::State>) -> tide::Result {
         .fetch_one(&db)
         .await?;
 
-    let token = jwt::token::create_token(user.id, user.default_role)?;
+    let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
 
     Ok(tide::Response::builder(200).body(token).build())
 }

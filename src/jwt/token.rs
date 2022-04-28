@@ -1,6 +1,5 @@
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
-use std::env;
 
 #[derive(Serialize, Deserialize)]
 struct HasuraUserClaim {
@@ -18,8 +17,11 @@ struct HasuraClaim {
     claim_url: HasuraUserClaim,
 }
 
-pub fn create_token(user_id: Uuid, default_role: String) -> Result<String, jwt_simple::Error> {
-    let jwt_secret = env::var("JWT_SECRET").unwrap();
+pub fn create_token(
+    jwt_secret: &String,
+    user_id: Uuid,
+    default_role: String,
+) -> Result<String, jwt_simple::Error> {
     let key = HS256Key::from_bytes(jwt_secret.as_bytes());
 
     let my_claim = HasuraClaim {

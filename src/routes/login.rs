@@ -22,6 +22,7 @@ const GET_USER_QUERY: &str = "SELECT * from users where email = $1";
 
 pub async fn login(mut req: tide::Request<state::State>) -> tide::Result {
     let db = req.state().db.clone();
+    let jwt_secret = req.state().jwt_secret.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
     let user: LoggedInUser = sqlx::query_as(GET_USER_QUERY)
@@ -35,7 +36,7 @@ pub async fn login(mut req: tide::Request<state::State>) -> tide::Result {
         return Ok(tide::Response::builder(401).body("Wrong password").build());
     }
 
-    let token = jwt::token::create_token(user.id, user.default_role)?;
+    let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
 
     Ok(tide::Response::builder(200).body(token).build())
 }

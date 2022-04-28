@@ -16,6 +16,10 @@ fn get_listen_address() -> String {
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
 
+    let jwt_secret = env::var("JWT_SECRET")
+        .map_err(|_err| format!("Env variable JWT_SECRET is not set"))
+        .unwrap();
+
     let db_url = env::var("DATABASE_URL")
         .map_err(|_err| format!("Env variable DATABASE_URL is not set"))
         .unwrap();
@@ -27,11 +31,10 @@ async fn main() -> Result<(), sqlx::Error> {
 
     sqlx::migrate!().run(&pg_pool).await?;
 
-    let mut app = tide::with_state(state::State { db: pg_pool });
-
-    env::var("JWT_SECRET")
-        .map_err(|_err| format!("Env variable JWT_SECRET is not set"))
-        .unwrap();
+    let mut app = tide::with_state(state::State {
+        db: pg_pool,
+        jwt_secret: jwt_secret,
+    });
 
     app.at("/health").get(routes::health::health);
 
