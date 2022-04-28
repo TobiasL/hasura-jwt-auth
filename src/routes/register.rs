@@ -1,9 +1,10 @@
 use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
+use tide::{Request, Response, Result};
 
 use crate::jwt;
-use crate::state;
+use crate::state::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LoginCredentials {
@@ -23,7 +24,7 @@ const ADD_USER_QUERY: &str = "
   VALUES ($1, $2, $3)
   RETURNING id, default_role";
 
-pub async fn register(mut req: tide::Request<state::State>) -> tide::Result {
+pub async fn register(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
     let credentials: LoginCredentials = req.body_json().await?;
@@ -39,5 +40,5 @@ pub async fn register(mut req: tide::Request<state::State>) -> tide::Result {
 
     let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
 
-    Ok(tide::Response::builder(200).body(token).build())
+    Ok(Response::builder(200).body(token).build())
 }

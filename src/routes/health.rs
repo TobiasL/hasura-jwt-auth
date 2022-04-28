@@ -1,5 +1,7 @@
+use tide::{Request, Response, Result};
+
 use crate::state;
 
-pub async fn health(_req: tide::Request<state::State>) -> tide::Result {
-    Ok(tide::Response::builder(200).build())
+pub async fn health(_req: Request<state::State>) -> Result {
+    Ok(Response::builder(200).build())
 }

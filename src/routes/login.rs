@@ -1,9 +1,10 @@
 use bcrypt::verify;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
+use tide::{Request, Response, Result};
 
 use crate::jwt;
-use crate::state;
+use crate::state::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct LoginCredentials {
@@ -20,7 +21,7 @@ struct LoggedInUser {
 
 const GET_USER_QUERY: &str = "SELECT * from users where email = $1";
 
-pub async fn login(mut req: tide::Request<state::State>) -> tide::Result {
+pub async fn login(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
     let credentials: LoginCredentials = req.body_json().await?;
@@ -33,10 +34,10 @@ pub async fn login(mut req: tide::Request<state::State>) -> tide::Result {
     let valid = verify(credentials.password, &user.password_hash)?;
 
     if !valid {
-        return Ok(tide::Response::builder(401).body("Wrong password").build());
+        return Ok(Response::builder(401).body("Wrong password").build());
     }
 
     let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
 
-    Ok(tide::Response::builder(200).body(token).build())
+    Ok(Response::builder(200).body(token).build())
 }
