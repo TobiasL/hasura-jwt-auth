@@ -13,7 +13,7 @@ struct LoginCredentials {
 }
 
 #[derive(Serialize, sqlx::Type, sqlx::FromRow)]
-struct LoggedInUser {
+struct UserRow {
     id: Uuid,
     password_hash: String,
     default_role: String,
@@ -26,18 +26,22 @@ pub async fn login(mut req: Request<State>) -> Result {
     let jwt_secret = req.state().jwt_secret.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
-    let user: LoggedInUser = sqlx::query_as(GET_USER_QUERY)
+    let found_user: Option<UserRow> = sqlx::query_as(GET_USER_QUERY)
         .bind(credentials.email)
-        .fetch_one(&db)
+        .fetch_optional(&db)
         .await?;
 
-    let valid = verify(credentials.password, &user.password_hash)?;
+    if let Some(user) = found_user {
+        let valid = verify(credentials.password, &user.password_hash)?;
 
-    if !valid {
-        return Ok(Response::builder(401).body("Wrong password").build());
+        if !valid {
+            return Ok(Response::builder(401).body("Wrong password").build());
+        }
+
+        let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
+
+        Ok(Response::builder(200).body(token).build())
+    } else {
+        Ok(Response::builder(401).body("User not found").build())
     }
-
-    let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
-
-    Ok(Response::builder(200).body(token).build())
 }
