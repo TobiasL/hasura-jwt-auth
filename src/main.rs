@@ -40,8 +40,8 @@ async fn main() -> Result<(), sqlx::Error> {
 
     app.at("/register").post(routes::register::register);
     app.at("/login").post(routes::login::login);
+    app.at("/refresh").post(routes::refresh::refresh);
     // app.at("/logout").post(login::login);
-    // app.at("/refresh").post(login::login);
 
     let listen_address = get_listen_address();
 
