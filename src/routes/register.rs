@@ -1,6 +1,7 @@
 use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
+use tide::convert::json;
 use tide::{Request, Response, Result};
 
 use crate::jwt;
@@ -38,7 +39,8 @@ pub async fn register(mut req: Request<State>) -> Result {
         .fetch_one(&db)
         .await?;
 
-    let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
+    let user_session =
+        jwt::session::create_session(&db, &jwt_secret, user.id, user.default_role).await?;
 
-    Ok(Response::builder(200).body(token).build())
+    Ok(Response::builder(200).body(json!(user_session)).build())
 }

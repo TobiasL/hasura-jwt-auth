@@ -1,6 +1,7 @@
 use bcrypt::verify;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
+use tide::convert::json;
 use tide::{Request, Response, Result};
 
 use crate::jwt;
@@ -38,9 +39,10 @@ pub async fn login(mut req: Request<State>) -> Result {
             return Ok(Response::builder(401).body("Wrong password").build());
         }
 
-        let token = jwt::token::create_token(&jwt_secret, user.id, user.default_role)?;
+        let user_session =
+            jwt::session::create_session(&db, &jwt_secret, user.id, user.default_role).await?;
 
-        Ok(Response::builder(200).body(token).build())
+        Ok(Response::builder(200).body(json!(user_session)).build())
     } else {
         Ok(Response::builder(401).body("User not found").build())
     }

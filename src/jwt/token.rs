@@ -32,7 +32,7 @@ pub fn create_token(
         },
     };
 
-    let claims = Claims::with_custom_claims(my_claim, Duration::from_hours(2));
+    let claims = Claims::with_custom_claims(my_claim, Duration::from_mins(15));
 
     key.authenticate(claims)
 }

@@ -18,7 +18,7 @@ END;
 $$;
 
 CREATE TABLE public.users (
-  id uuid DEFAULT public.gen_random_uuid () NOT NULL PRIMARY KEY,
+  id uuid DEFAULT public.gen_random_uuid() NOT NULL PRIMARY KEY,
   email email UNIQUE,
   password_hash text NOT NULL,
   name text NOT NULL,
@@ -29,7 +29,7 @@ CREATE TABLE public.users (
 );
 
 CREATE TABLE public.refresh_tokens (
-  refresh_token uuid NOT NULL PRIMARY KEY,
+  refresh_token uuid DEFAULT public.gen_random_uuid() NOT NULL PRIMARY KEY,
   created_at timestamp with time zone DEFAULT now() NOT NULL,
   expires_at timestamp with time zone NOT NULL,
   user_id uuid NOT NULL
