@@ -3,13 +3,28 @@ name: Continuous Integration
 on: [push, pull_request]
 
 jobs:
-  build:
+  build_and_test:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:13.5
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: auth_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - uses: actions/checkout@v3
 
-      - name: Cache multiple paths
+      - name: Cache multiple Rust paths
         uses: actions/cache@v3
         with:
           path: |
@@ -18,7 +33,8 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - uses: actions-rs/toolchain@v1
+      - name: Setup stable Rust toolchain
+        uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
 
@@ -31,3 +47,20 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: test
+
+      - name: Cache Node.js tests paths
+        uses: actions/cache@v3
+        with:
+          path: '**/node_modules'
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/package-lock.json') }}
+
+      - name: Setup Node.js 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Install dependencies to run integration tests
+        run: npm install -prefix integration/
+
+      - name: Run integration tests
+        run: npm test -prefix integration/
