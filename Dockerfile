@@ -15,7 +15,7 @@ COPY ./src ./src
 
 RUN cargo build --release --bin hasura-jwt-auth
 
-FROM debian:stable
+FROM debian:stable as runner
 
 COPY --from=build /hasura-jwt-auth/target/release/hasura-jwt-auth .
 
