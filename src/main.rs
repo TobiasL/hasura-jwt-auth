@@ -4,6 +4,7 @@ use std::env;
 mod jwt;
 mod routes;
 mod state;
+mod user_org;
 
 fn get_listen_address() -> String {
     let host = env::var("HOST").unwrap_or("0.0.0.0".to_string());
@@ -30,10 +31,12 @@ async fn main() -> Result<(), sqlx::Error> {
         .await?;
 
     sqlx::migrate!().run(&pg_pool).await?;
+    let table_conn = user_org::check_org_column(&pg_pool).await?;
 
     let mut app = tide::with_state(state::State {
         db: pg_pool,
-        jwt_secret: jwt_secret,
+        jwt_secret,
+        table_conn,
     });
 
     app.at("/health").get(routes::health::health);

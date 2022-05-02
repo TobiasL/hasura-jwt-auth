@@ -2,9 +2,11 @@ use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use tide::convert::json;
+use tide::Error;
 use tide::{Request, Response, Result};
 
-use crate::jwt;
+use crate::jwt::session::create_session;
+use crate::jwt::session::UserToken;
 use crate::state::State;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -37,10 +39,17 @@ pub async fn register(mut req: Request<State>) -> Result {
         .bind(hashed_password)
         .bind(credentials.name)
         .fetch_one(&db)
-        .await?;
+        .await
+        .map_err(|_err| Error::from_str(400, "User with email already exists"))?;
 
-    let user_session =
-        jwt::session::create_session(&db, &jwt_secret, user.id, user.default_role).await?;
+    // The user is not connected to an organisation directly after registration.
+    let user_token = UserToken {
+        user_id: user.id,
+        default_role: user.default_role,
+        org_id: None,
+    };
+
+    let user_session = create_session(&db, &jwt_secret, user_token).await?;
 
     Ok(Response::builder(200).body(json!(user_session)).build())
 }

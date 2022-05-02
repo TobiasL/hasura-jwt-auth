@@ -9,6 +9,8 @@ struct HasuraUserClaim {
     default_role: String,
     #[serde(rename(serialize = "x-hasura-user-id"))]
     user_id: String,
+    #[serde(rename(serialize = "x-hasura-organisation-id"))]
+    org_id: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -21,6 +23,7 @@ pub fn create_token(
     jwt_secret: &String,
     user_id: Uuid,
     default_role: String,
+    org_id: Option<Uuid>,
 ) -> Result<String, jwt_simple::Error> {
     let key = HS256Key::from_bytes(jwt_secret.as_bytes());
 
@@ -29,6 +32,7 @@ pub fn create_token(
             allowed_roles: vec![default_role.to_string()],
             default_role: default_role.to_string(),
             user_id: user_id.to_string(),
+            org_id: org_id.map(|uuid| uuid.to_string()),
         },
     };
 

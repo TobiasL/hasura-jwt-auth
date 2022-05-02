@@ -1,16 +1,16 @@
-const knex = require('knex')
 const knexCleaner = require('knex-cleaner')
 
-const knexClient = knex({
-  client: 'pg',
-  connection: 'postgres://postgres:postgrespassword@localhost:5432/auth_db'
-})
+const { knexClient } = require('./knexClient')
 
 const migrationTables = ['_sqlx_migrations']
 
 const databaseLifecycle = () => {
   beforeEach(async () => knexCleaner.clean(knexClient, { mode: 'delete', ignoreTables: migrationTables }))
-  afterAll(() => knexClient.destroy())
+  afterAll(async () => {
+    await knexClient.raw('DROP TABLE IF EXISTS user_metadata;')
+
+    knexClient.destroy()
+  })
 }
 
 module.exports = databaseLifecycle

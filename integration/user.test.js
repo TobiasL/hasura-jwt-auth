@@ -1,11 +1,10 @@
 const axios = require('axios')
 
+const { DATABASE_URL } = require('./knexClient')
 const databaseLifecycle = require('./databaseLifecycle')
 const startAuthServer = require('./startAuthServer')
 
 databaseLifecycle()
-
-const DATABASE_URL = 'postgres://postgres:postgrespassword@localhost:5432/auth_db'
 
 it('Register a user and login', async () => {
   const { url, server } = await startAuthServer({
@@ -47,6 +46,7 @@ it('Register a user and login', async () => {
       'x-hasura-allowed-roles': ['user'],
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
+      'x-hasura-organisation-id': null,
     }
   })
 

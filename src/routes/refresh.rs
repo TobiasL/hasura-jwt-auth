@@ -1,9 +1,12 @@
-use crate::jwt;
-use crate::state;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use tide::convert::json;
+use tide::Error;
 use tide::{Request, Response, Result};
+
+use crate::jwt::refresh::get_refresh_token;
+use crate::jwt::session::create_session;
+use crate::state;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct RefreshPayload {
@@ -13,11 +16,15 @@ struct RefreshPayload {
 pub async fn refresh(mut req: Request<state::State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
+    let table_conn = req.state().table_conn.clone();
     let credentials: RefreshPayload = req.body_json().await?;
 
-    let user = jwt::refresh::get_refresh_token(&db, credentials.refresh).await?;
-    let user_session =
-        jwt::session::create_session(&db, &jwt_secret, user.user_id, user.default_role).await?;
+    match get_refresh_token(&db, &table_conn, credentials.refresh).await? {
+        None => Err(Error::from_str(401, "Refresh token not found")),
+        Some(user_found) => {
+            let user_session = create_session(&db, &jwt_secret, user_found).await?;
 
-    Ok(Response::builder(200).body(json!(user_session)).build())
+            Ok(Response::builder(200).body(json!(user_session)).build())
+        }
+    }
 }
