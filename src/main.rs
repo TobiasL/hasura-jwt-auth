@@ -40,6 +40,10 @@ async fn main() -> Result<(), sqlx::Error> {
     app.at("/login").post(routes::login::login);
     app.at("/refresh").post(routes::refresh::refresh);
 
+    app.at("/reset-password")
+        .post(routes::reset_password::reset);
+    app.at("/password").post(routes::reset_password::set);
+
     let listen_address = get_listen_address();
 
     app.listen(listen_address).await?;

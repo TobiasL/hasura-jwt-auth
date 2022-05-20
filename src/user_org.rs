@@ -1,19 +1,10 @@
-use jwt_simple::prelude::*;
-
-use sqlx::types::Uuid;
-use sqlx::PgPool;
 use std::env;
+use sqlx::PgPool;
 
 #[derive(Debug, Clone)]
 pub struct TableConn {
     pub table_name: String,
     pub column_name: String,
-}
-
-#[derive(Serialize, sqlx::Type, sqlx::FromRow)]
-struct OrgClaimRow {
-    user_id: Uuid,
-    org_id: Uuid,
 }
 
 fn get_column_names() -> Option<TableConn> {
@@ -39,9 +30,7 @@ pub async fn check_org_column(pg_pool: &PgPool) -> Result<Option<TableConn>, sql
                 table_conn.column_name, table_conn.table_name
             );
 
-            let _result: Option<OrgClaimRow> = sqlx::query_as(&org_claim_query)
-                .fetch_optional(pg_pool)
-                .await?;
+            sqlx::query(&org_claim_query).execute(pg_pool).await?;
 
             Ok(Some(table_conn))
         }

@@ -25,7 +25,9 @@ CREATE TABLE public.users (
   avatar_url text DEFAULT '' NOT NULL,
   default_role text DEFAULT 'user',
   created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now()
+  updated_at timestamp with time zone DEFAULT now(),
+  ticket uuid,
+  ticket_expires_at timestamp with time zone
 );
 
 CREATE TABLE public.refresh_tokens (
