@@ -5,7 +5,7 @@ const getPort = require('get-port')
 const startAuthServer = async (extendedEnv) => new Promise(async (resolve, reject) => {
   const port = await getPort()
 
-  const env = { ...process.env,  ...extendedEnv, PORT: port }
+  const env = { ...process.env, ...extendedEnv, PORT: port }
   const server = spawn('cargo', ['run'], { env })
     .on('exit', (code) => reject(code))
 
@@ -13,13 +13,13 @@ const startAuthServer = async (extendedEnv) => new Promise(async (resolve, rejec
 
   while (!server.exitCode) {
     try {
-      const { status }  = await axios(`${url}/health`)
+      const { status } = await axios(`${url}/health`)
 
       if (status === 200) {
         return resolve({ url, server })
       }
     } catch (err) {
-      await new Promise((resolve) => setTimeout(resolve, 50))
+      await new Promise((resolveWait) => setTimeout(resolveWait, 50))
     }
   }
 })

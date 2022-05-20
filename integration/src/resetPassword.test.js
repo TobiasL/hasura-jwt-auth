@@ -12,33 +12,33 @@ it('Reset password and login with the new password', async () => {
     DATABASE_URL,
   })
 
-  const { status: registerStatus }  = await axios.post(`${url}/register`, {
-    email: "lars@domain.com",
-    password: "lars",
-    name: "Lars Larsson",
+  const { status: registerStatus } = await axios.post(`${url}/register`, {
+    email: 'lars@domain.com',
+    password: 'lars',
+    name: 'Lars Larsson',
   })
 
   expect(registerStatus).toEqual(200)
 
-  const { status: resetStatus }  = await axios.post(`${url}/reset-password`, {
-    email: "lars@domain.com",
+  const { status: resetStatus } = await axios.post(`${url}/reset-password`, {
+    email: 'lars@domain.com',
   })
 
   expect(resetStatus).toEqual(200)
 
   const { ticket: ticketSentToEmail } = await knexClient('users').select('ticket')
-    .where('email', "lars@domain.com").first()
+    .where('email', 'lars@domain.com').first()
 
   const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
     ticket: ticketSentToEmail,
-    password: "new-magic-password",
+    password: 'new-magic-password',
   })
 
   expect(setPasswordStatus).toEqual(200)
 
-  const { status: loginStatus }  = await axios.post(`${url}/login`, {
-    email: "lars@domain.com",
-    password: "new-magic-password"
+  const { status: loginStatus } = await axios.post(`${url}/login`, {
+    email: 'lars@domain.com',
+    password: 'new-magic-password',
   })
 
   expect(loginStatus).toEqual(200)
@@ -52,11 +52,11 @@ it('Fail reset password for a user that doesn\'t exist', async () => {
     DATABASE_URL,
   })
 
-  const { status }  = await axios.post(`${url}/reset-password`, {
-    email: "fake@user.com",
+  const { status: resetStatus } = await axios.post(`${url}/reset-password`, {
+    email: 'fake@user.com',
   }, { validateStatus: (status) => status < 500 })
 
-  expect(status).toEqual(401)
+  expect(resetStatus).toEqual(401)
 
   server.kill()
 })
@@ -71,7 +71,7 @@ it('Fail set password with an expired ticket', async () => {
 
   const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
     ticket: EXPIRED_TICKET,
-    password: "new-magic-password",
+    password: 'new-magic-password',
   }, { validateStatus: (status) => status < 500 })
 
   expect(setPasswordStatus).toEqual(401)

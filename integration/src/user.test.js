@@ -13,17 +13,17 @@ it('Register a user and login', async () => {
     DATABASE_URL,
   })
 
-  const { status: registerStatus }  = await axios.post(`${url}/register`, {
-    email: "lars@domain.com",
-    password: "lars",
-    name: "Lars Larsson",
+  const { status: registerStatus } = await axios.post(`${url}/register`, {
+    email: 'lars@domain.com',
+    password: 'lars',
+    name: 'Lars Larsson',
   })
 
   expect(registerStatus).toEqual(200)
 
-  const { data: loginResponse }  = await axios.post(`${url}/login`, {
-    email: "lars@domain.com",
-    password: "lars"
+  const { data: loginResponse } = await axios.post(`${url}/login`, {
+    email: 'lars@domain.com',
+    password: 'lars',
   })
 
   expect(loginResponse.refresh).toEqual(expect.any(String))
@@ -51,7 +51,7 @@ it('Register a user and login', async () => {
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
       'x-hasura-organisation-id': null,
-    }
+    },
   })
 
   server.kill()

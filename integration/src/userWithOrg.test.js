@@ -24,10 +24,10 @@ it('Register a user connected to an organisation and login', async () => {
     JWT_ORG_CUSTOM_CLAIM: 'user_metadata.org_id',
   })
 
-  const { status: registerStatus }  = await axios.post(`${url}/register`, {
-    email: "lars@domain.com",
-    password: "lars",
-    name: "Lars Larsson",
+  const { status: registerStatus } = await axios.post(`${url}/register`, {
+    email: 'lars@domain.com',
+    password: 'lars',
+    name: 'Lars Larsson',
   })
 
   expect(registerStatus).toEqual(200)
@@ -35,9 +35,9 @@ it('Register a user connected to an organisation and login', async () => {
   const { id } = await knexClient('users').select('id').where('email', 'lars@domain.com').first()
   await knexClient('user_metadata').insert({ user_id: id, org_id: ORG_ID })
 
-  const { data: loginResponse }  = await axios.post(`${url}/login`, {
-    email: "lars@domain.com",
-    password: "lars"
+  const { data: loginResponse } = await axios.post(`${url}/login`, {
+    email: 'lars@domain.com',
+    password: 'lars',
   })
 
   expect(loginResponse.refresh).toEqual(expect.any(String))
@@ -62,7 +62,7 @@ it('Register a user connected to an organisation and login', async () => {
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
       'x-hasura-organisation-id': ORG_ID,
-    }
+    },
   })
 
   server.kill()
@@ -77,10 +77,10 @@ it('Register a user connected to an organisation and refresh', async () => {
     JWT_ORG_CUSTOM_CLAIM: 'user_metadata.org_id',
   })
 
-  const { data: registerResponse, status: registerStatus }  = await axios.post(`${url}/register`, {
-    email: "lars@domain.com",
-    password: "lars",
-    name: "Lars Larsson",
+  const { data: registerResponse, status: registerStatus } = await axios.post(`${url}/register`, {
+    email: 'lars@domain.com',
+    password: 'lars',
+    name: 'Lars Larsson',
   })
 
   expect(registerStatus).toEqual(200)
@@ -88,7 +88,7 @@ it('Register a user connected to an organisation and refresh', async () => {
   const { id } = await knexClient('users').select('id').where('email', 'lars@domain.com').first()
   await knexClient('user_metadata').insert({ user_id: id, org_id: ORG_ID })
 
-  const { data: refreshResponse }  = await axios.post(`${url}/refresh`, {
+  const { data: refreshResponse } = await axios.post(`${url}/refresh`, {
     refresh: registerResponse.refresh,
   })
 
@@ -114,7 +114,7 @@ it('Register a user connected to an organisation and refresh', async () => {
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
       'x-hasura-organisation-id': ORG_ID,
-    }
+    },
   })
 
   server.kill()

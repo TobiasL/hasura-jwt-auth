@@ -1,5 +1,5 @@
-use std::env;
 use sqlx::PgPool;
+use std::env;
 
 #[derive(Debug, Clone)]
 pub struct TableConn {
