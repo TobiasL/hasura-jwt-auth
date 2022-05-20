@@ -49,23 +49,24 @@ pub async fn login(mut req: Request<State>) -> Result {
         .fetch_optional(&db)
         .await?;
 
-    if let Some(user) = found_user {
-        let valid = verify(credentials.password, &user.password_hash)?;
+    match found_user {
+        None => Ok(Response::builder(401).body("User not found").build()),
+        Some(user) => {
+            let valid = verify(credentials.password, &user.password_hash)?;
 
-        if !valid {
-            return Ok(Response::builder(401).body("Wrong password").build());
+            if !valid {
+                return Ok(Response::builder(401).body("Wrong password").build());
+            }
+
+            let user_token = UserToken {
+                user_id: user.id,
+                default_role: user.default_role,
+                org_id: user.org_id,
+            };
+
+            let user_session = create_session(&db, &jwt_secret, user_token).await?;
+
+            Ok(Response::builder(200).body(json!(user_session)).build())
         }
-
-        let user_token = UserToken {
-            user_id: user.id,
-            default_role: user.default_role,
-            org_id: user.org_id,
-        };
-
-        let user_session = create_session(&db, &jwt_secret, user_token).await?;
-
-        Ok(Response::builder(200).body(json!(user_session)).build())
-    } else {
-        Ok(Response::builder(401).body("User not found").build())
     }
 }

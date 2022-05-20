@@ -25,7 +25,8 @@ struct LoggedInUser {
 const ADD_USER_QUERY: &str = "
   INSERT INTO users (email, password_hash, name)
   VALUES ($1, $2, $3)
-  RETURNING id, default_role";
+  RETURNING id, default_role;
+";
 
 pub async fn register(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();

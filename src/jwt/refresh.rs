@@ -9,7 +9,8 @@ use crate::user_org::TableConn;
 const ADD_REFRESH_TOKEN_QUERY: &str = "
   INSERT INTO refresh_tokens (user_id, expires_at)
   VALUES ($1, current_timestamp + interval '60 minute')
-  RETURNING refresh_token";
+  RETURNING refresh_token;
+";
 
 #[derive(Serialize, sqlx::Type, sqlx::FromRow)]
 struct RefreshToken {
@@ -19,7 +20,8 @@ struct RefreshToken {
 const GET_REFRESH_TOKEN_QUERY: &str = "
   SELECT refresh_tokens.user_id, users.default_role FROM refresh_tokens
   LEFT JOIN users ON users.id = refresh_tokens.user_id
-  WHERE refresh_token = $1 AND expires_at > current_timestamp;";
+  WHERE refresh_token = $1 AND expires_at > current_timestamp;
+";
 
 pub async fn create_refresh_token(db: &PgPool, user_id: Uuid) -> Result<Uuid> {
     let token: RefreshToken = sqlx::query_as(ADD_REFRESH_TOKEN_QUERY)
