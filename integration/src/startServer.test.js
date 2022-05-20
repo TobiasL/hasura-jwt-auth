@@ -1,4 +1,4 @@
-const startAuthServer = require('./startAuthServer')
+const startAuthServer = require('./helpers/startAuthServer')
 
 it('Start server without JWT_SECRET env exits with code 101', async () => {
   const env = {}
