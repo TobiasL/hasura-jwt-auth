@@ -11,7 +11,7 @@ const startAuthServer = async (extendedEnv) => new Promise(async (resolve, rejec
 
   const url = `http://127.0.0.1:${port}`
 
-  while (true) {
+  while (!server.exitCode) {
     try {
       const { status }  = await axios(`${url}/health`)
 
