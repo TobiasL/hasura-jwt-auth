@@ -1,4 +1,5 @@
 const axios = require('axios')
+const jwt = require('jsonwebtoken')
 
 const { DATABASE_URL } = require('./knexClient')
 const databaseLifecycle = require('./databaseLifecycle')
@@ -27,6 +28,9 @@ it('Register a user and login', async () => {
 
   expect(loginResponse.refresh).toEqual(expect.any(String))
   expect(loginResponse.jwt_token).toEqual(expect.any(String))
+
+  // Throws if the signature doesn't match.
+  jwt.verify(loginResponse.jwt_token, 'TEST_JWT_VALUE')
 
   const [header, payload] = loginResponse.jwt_token.split('.')
 
