@@ -1,10 +1,10 @@
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
+use tide::Result;
 
 use crate::jwt::refresh::create_refresh_token;
 use crate::jwt::token::create_token;
-use tide::Result;
 
 #[derive(Serialize, sqlx::FromRow)]
 pub struct UserToken {
@@ -16,7 +16,9 @@ pub struct UserToken {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct UserSession {
     jwt_token: String,
+    jwt_token_expires_minutes: u32,
     refresh: String,
+    refresh_expires_days: u32,
 }
 
 pub async fn create_session(
@@ -29,6 +31,8 @@ pub async fn create_session(
 
     Ok(UserSession {
         jwt_token: access_token,
+        jwt_token_expires_minutes: 15,
         refresh: refresh_token.to_string(),
+        refresh_expires_days: 60,
     })
 }
