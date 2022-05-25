@@ -19,6 +19,7 @@ async fn main() -> Result<(), sqlx::Error> {
 
     let jwt_secret = env::var("JWT_SECRET").expect("Env variable JWT_SECRET is not set");
     let db_url = env::var("DATABASE_URL").expect("Env variable DATABASE_URL is not set");
+    let post_reset_password_url = env::var("POST_RESET_PASSWORD_URL").ok();
 
     let pg_pool = PgPoolOptions::new()
         .max_connections(5)
@@ -32,6 +33,7 @@ async fn main() -> Result<(), sqlx::Error> {
         db: pg_pool,
         jwt_secret,
         table_conn,
+        post_reset_password_url,
     });
 
     app.at("/health").get(routes::health::health);

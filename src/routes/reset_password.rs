@@ -1,6 +1,7 @@
 use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
+use surf;
 use tide::convert::json;
 use tide::{Request, Response, Result};
 
@@ -31,12 +32,19 @@ const SET_USER_TICKET_QUERY: &str = "
     WHERE id = $1 RETURNING ticket;
 ";
 
+#[derive(Debug, Serialize)]
+struct SendEmailPayload {
+    email: String,
+    ticket: String,
+}
+
 pub async fn reset(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
+    let post_reset_password_url = req.state().post_reset_password_url.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
     let found_user: Option<UserRow> = sqlx::query_as(GET_USER_QUERY)
-        .bind(credentials.email)
+        .bind(&credentials.email)
         .fetch_optional(&db)
         .await?;
 
@@ -48,7 +56,19 @@ pub async fn reset(mut req: Request<State>) -> Result {
                 .fetch_one(&db)
                 .await?;
 
-            Ok(Response::builder(200).body(json!(ticket)).build())
+            match post_reset_password_url {
+                None => Ok(Response::builder(200).body(json!(ticket)).build()),
+                Some(url) => {
+                    let payload = SendEmailPayload {
+                        email: credentials.email,
+                        ticket: ticket.ticket.to_string(),
+                    };
+
+                    surf::post(url).body_json(&payload)?.await?;
+
+                    Ok(Response::builder(200).body(json!(ticket)).build())
+                }
+            }
         }
     }
 }
