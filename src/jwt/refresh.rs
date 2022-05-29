@@ -8,7 +8,7 @@ use crate::user_org::TableConn;
 
 const ADD_REFRESH_TOKEN_QUERY: &str = "
   INSERT INTO refresh_tokens (user_id, expires_at)
-  VALUES ($1, current_timestamp + interval '60 minute')
+  VALUES ($1, current_timestamp + interval '60 days')
   RETURNING refresh_token;
 ";
 
