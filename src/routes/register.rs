@@ -23,8 +23,7 @@ pub async fn register(mut req: Request<State>) -> Result {
     let user = create_user(&db, credentials.email, hashed_password, credentials.name).await?;
 
     // The user is not connected to an organisation directly after registration.
-    let user_session =
-        create_session(&db, &jwt_secret, &user.id, &user.default_role, &None).await?;
+    let user_session = create_session(&db, &jwt_secret, &user.id, &user.default_role, &None).await?;
 
     Ok(Response::builder(200).body(json!(user_session)).build())
 }

@@ -15,10 +15,7 @@ const SET_USER_TICKET_QUERY: &str = "
 ";
 
 pub async fn set_user_ticket(db: &PgPool, user_id: &Uuid) -> Result<Uuid> {
-    let ticket: TicketRow = sqlx::query_as(SET_USER_TICKET_QUERY)
-        .bind(user_id)
-        .fetch_one(db)
-        .await?;
+    let ticket: TicketRow = sqlx::query_as(SET_USER_TICKET_QUERY).bind(user_id).fetch_one(db).await?;
 
     Ok(ticket.ticket)
 }
@@ -34,10 +31,7 @@ const GET_TICKET_USER_QUERY: &str = "
 ";
 
 pub async fn get_user_ticket(db: &PgPool, ticket: Uuid) -> Result<Option<Uuid>> {
-    let found_user: Option<UserRow> = sqlx::query_as(GET_TICKET_USER_QUERY)
-        .bind(ticket)
-        .fetch_optional(db)
-        .await?;
+    let found_user: Option<UserRow> = sqlx::query_as(GET_TICKET_USER_QUERY).bind(ticket).fetch_optional(db).await?;
 
     Ok(found_user.map(|user| user.id))
 }

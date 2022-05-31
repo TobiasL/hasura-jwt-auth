@@ -33,8 +33,7 @@ pub async fn login(mut req: Request<State>) -> Result {
                 return Ok(Response::builder(401).body("Wrong password").build());
             }
 
-            let user_session =
-                create_session(&db, &jwt_secret, &id, &default_role, &org_id).await?;
+            let user_session = create_session(&db, &jwt_secret, &id, &default_role, &org_id).await?;
 
             Ok(Response::builder(200).body(json!(user_session)).build())
         }

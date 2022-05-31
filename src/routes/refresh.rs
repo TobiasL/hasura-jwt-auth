@@ -25,8 +25,7 @@ pub async fn refresh(mut req: Request<state::State>) -> Result {
             default_role,
             org_id,
         }) => {
-            let user_session =
-                create_session(&db, &jwt_secret, &user_id, &default_role, &org_id).await?;
+            let user_session = create_session(&db, &jwt_secret, &user_id, &default_role, &org_id).await?;
 
             Ok(Response::builder(200).body(json!(user_session)).build())
         }

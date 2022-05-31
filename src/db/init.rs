@@ -8,10 +8,7 @@ pub struct TableConn {
 }
 
 pub async fn connect_and_migrate(db_url: &String) -> Result<PgPool, sqlx::Error> {
-    let pg_pool = PgPoolOptions::new()
-        .max_connections(5)
-        .connect(db_url)
-        .await?;
+    let pg_pool = PgPoolOptions::new().max_connections(5).connect(db_url).await?;
 
     sqlx::migrate!().run(&pg_pool).await?;
 

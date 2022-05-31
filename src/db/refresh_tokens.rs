@@ -29,10 +29,7 @@ const GET_REFRESH_TOKEN_QUERY: &str = "
 ";
 
 pub async fn create_refresh_token(db: &PgPool, user_id: &Uuid) -> Result<Uuid> {
-    let token: RefreshToken = sqlx::query_as(ADD_REFRESH_TOKEN_QUERY)
-        .bind(user_id)
-        .fetch_one(db)
-        .await?;
+    let token: RefreshToken = sqlx::query_as(ADD_REFRESH_TOKEN_QUERY).bind(user_id).fetch_one(db).await?;
 
     Ok(token.refresh_token)
 }

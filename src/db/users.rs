@@ -30,11 +30,7 @@ fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
     }
 }
 
-pub async fn get_user(
-    db: &PgPool,
-    table_conn: &Option<TableConn>,
-    email: &String,
-) -> Result<Option<UserRow>> {
+pub async fn get_user(db: &PgPool, table_conn: &Option<TableConn>, email: &String) -> Result<Option<UserRow>> {
     let user_query = get_user_org_query(table_conn);
 
     sqlx::query_as(&user_query)
@@ -56,12 +52,7 @@ const ADD_USER_QUERY: &str = "
   RETURNING id, default_role;
 ";
 
-pub async fn create_user(
-    db: &PgPool,
-    email: String,
-    hashed_password: String,
-    name: String,
-) -> Result<LoggedInUserRow> {
+pub async fn create_user(db: &PgPool, email: String, hashed_password: String, name: String) -> Result<LoggedInUserRow> {
     let user = sqlx::query_as(ADD_USER_QUERY)
         .bind(email)
         .bind(hashed_password)
