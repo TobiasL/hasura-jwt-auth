@@ -52,7 +52,12 @@ const ADD_USER_QUERY: &str = "
   RETURNING id, default_role;
 ";
 
-pub async fn create_user(db: &PgPool, email: String, hashed_password: String, name: String) -> Result<LoggedInUserRow> {
+pub async fn create_user(
+    db: &PgPool,
+    email: &String,
+    hashed_password: String,
+    name: String,
+) -> Result<LoggedInUserRow> {
     let user = sqlx::query_as(ADD_USER_QUERY)
         .bind(email)
         .bind(hashed_password)

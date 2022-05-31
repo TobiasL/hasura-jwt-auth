@@ -21,19 +21,21 @@ pub async fn set_user_ticket(db: &PgPool, user_id: &Uuid) -> Result<Uuid> {
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
-struct UserRow {
-    id: Uuid,
+pub struct ResetUserRow {
+    pub id: Uuid,
+    pub email: String,
 }
 
 const GET_TICKET_USER_QUERY: &str = "
-    SELECT id FROM users
+    SELECT id, email::text FROM users
     WHERE ticket_expires_at > CURRENT_TIMESTAMP AND ticket = $1;
 ";
 
-pub async fn get_user_ticket(db: &PgPool, ticket: Uuid) -> Result<Option<Uuid>> {
-    let found_user: Option<UserRow> = sqlx::query_as(GET_TICKET_USER_QUERY).bind(ticket).fetch_optional(db).await?;
+pub async fn get_user_ticket(db: &PgPool, ticket: Uuid) -> Result<Option<ResetUserRow>> {
+    let found_user: Option<ResetUserRow> =
+        sqlx::query_as(GET_TICKET_USER_QUERY).bind(ticket).fetch_optional(db).await?;
 
-    Ok(found_user.map(|user| user.id))
+    Ok(found_user)
 }
 
 const SET_NEW_PASSWORD_QUERY: &str = "
