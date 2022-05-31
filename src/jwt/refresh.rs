@@ -1,10 +1,9 @@
+use crate::db::init::TableConn;
 use crate::jwt::session::UserToken;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
 use tide::{Error, Result};
-
-use crate::user_org::TableConn;
 
 const ADD_REFRESH_TOKEN_QUERY: &str = "
   INSERT INTO refresh_tokens (user_id, expires_at)

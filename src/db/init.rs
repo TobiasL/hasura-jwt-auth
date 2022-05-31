@@ -1,5 +1,5 @@
+use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
-use std::env;
 
 #[derive(Debug, Clone)]
 pub struct TableConn {
@@ -7,24 +7,31 @@ pub struct TableConn {
     pub column_name: String,
 }
 
-fn get_column_names() -> Option<TableConn> {
-    match env::var("JWT_ORG_CUSTOM_CLAIM") {
-        Err(_err) => None,
-        Ok(custom_claim) => {
-            let split_custom_claim: Vec<&str> = custom_claim.split(".").collect();
+pub async fn connect_and_migrate(db_url: &String) -> Result<PgPool, sqlx::Error> {
+    let pg_pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(db_url)
+        .await?;
 
-            Some(TableConn {
-                table_name: split_custom_claim[0].to_string(),
-                column_name: split_custom_claim[1].to_string(),
-            })
-        }
-    }
+    sqlx::migrate!().run(&pg_pool).await?;
+
+    Ok(pg_pool)
 }
 
-pub async fn check_org_column(pg_pool: &PgPool) -> Result<Option<TableConn>, sqlx::Error> {
-    match get_column_names() {
+pub async fn check_org_column(
+    pg_pool: &PgPool,
+    custom_claim: Option<String>,
+) -> Result<Option<TableConn>, sqlx::Error> {
+    match custom_claim {
         None => Ok(None),
-        Some(table_conn) => {
+        Some(custom_claim) => {
+            let split_custom_claim: Vec<&str> = custom_claim.split(".").collect();
+
+            let table_conn = TableConn {
+                table_name: split_custom_claim[0].to_string(),
+                column_name: split_custom_claim[1].to_string(),
+            };
+
             let org_claim_query = format!(
                 "SELECT user_id, {} AS org_id FROM {} LIMIT 1;",
                 table_conn.column_name, table_conn.table_name

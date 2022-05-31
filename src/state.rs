@@ -1,6 +1,5 @@
+use crate::db::init::TableConn;
 use sqlx::PgPool;
-
-use crate::user_org::TableConn;
 
 #[derive(Clone)]
 pub struct State {
