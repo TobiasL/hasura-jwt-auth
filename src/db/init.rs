@@ -7,8 +7,13 @@ pub struct TableConn {
     pub column_name: String,
 }
 
-pub async fn connect_and_migrate(db_url: &String) -> Result<PgPool, sqlx::Error> {
-    let pg_pool = PgPoolOptions::new().max_connections(5).connect(db_url).await?;
+fn parse_connections(connections: Option<String>) -> u32 {
+    connections.map_or(5, |value| value.parse::<u32>().unwrap_or(5))
+}
+
+pub async fn connect_and_migrate(db_url: &String, connections: Option<String>) -> Result<PgPool, sqlx::Error> {
+    let max_connections = parse_connections(connections);
+    let pg_pool = PgPoolOptions::new().max_connections(max_connections).connect(db_url).await?;
 
     sqlx::migrate!().run(&pg_pool).await?;
 
