@@ -13,7 +13,7 @@ const startAuthServer = async (extendedEnv) => new Promise(async (resolve, rejec
 
   while (!server.exitCode) {
     try {
-      const { status } = await axios(`${url}/health`)
+      const { status } = await axios(`${url}/readyz`)
 
       if (status === 200) {
         return resolve({ url, server })

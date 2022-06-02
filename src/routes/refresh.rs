@@ -1,7 +1,7 @@
 use crate::db::refresh_tokens::get_refresh_token;
 use crate::db::refresh_tokens::RefreshUserRow;
 use crate::jwt::session::create_session;
-use crate::state;
+use crate::state::State;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use tide::convert::json;
@@ -12,7 +12,7 @@ struct RefreshPayload {
     refresh: Uuid,
 }
 
-pub async fn refresh(mut req: Request<state::State>) -> Result {
+pub async fn refresh(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
     let table_conn = req.state().table_conn.clone();

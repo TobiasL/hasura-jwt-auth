@@ -5,8 +5,9 @@ mod state;
 
 use db::init::check_org_column;
 use db::init::connect_and_migrate;
-use routes::health::health;
+use routes::live::live;
 use routes::login::login;
+use routes::ready::ready;
 use routes::refresh::refresh;
 use routes::register::register;
 use routes::reset_password::{reset, set};
@@ -44,7 +45,9 @@ async fn main() -> Result<(), sqlx::Error> {
         post_set_password_url,
     });
 
-    app.at("/health").get(health);
+    app.at("/livez").get(live);
+    app.at("/readyz").get(ready);
+
     app.at("/register").post(register);
     app.at("/login").post(login);
     app.at("/refresh").post(refresh);
