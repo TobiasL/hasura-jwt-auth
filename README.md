@@ -20,6 +20,8 @@ TODO: Publish to Docker Hub.
 * `HOST` change from the default host 0.0.0.0.
 * `PORT` change from the default port 80.
 * `DATABASE_CONNECTIONS` number of connections for the Postgres connection pool.
+* `JWT_EXPIRES_IN_MINUTES` how many minutes until a JWT token expires.
+* `REFRESH_EXPIRES_IN_DAYS` how many days until a refresh token expires.
 * `JWT_ORG_CUSTOM_CLAIM` string to indicate which table and column to fetch an organisation ID from.
 For example `user_metadata.org_id` fetches the value and adds it to the claim `x-hasura-organisation-id`.
 Need a foreign key that points to the uuid columns `user.id`.

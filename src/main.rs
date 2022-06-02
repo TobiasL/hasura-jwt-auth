@@ -20,6 +20,18 @@ fn get_listen_address() -> String {
     format!("{host}:{port}")
 }
 
+fn get_jwt_expires() -> u64 {
+    let jwt_expires_in_minutes = env::var("JWT_EXPIRES_IN_MINUTES").ok();
+
+    jwt_expires_in_minutes.map_or(15, |value| value.parse::<u64>().unwrap_or(15))
+}
+
+fn get_refresh_expires() -> u64 {
+    let refresh_expires_in_days = env::var("REFRESH_EXPIRES_IN_DAYS").ok();
+
+    refresh_expires_in_days.map_or(60, |value| value.parse::<u64>().unwrap_or(60))
+}
+
 #[async_std::main]
 async fn main() -> Result<(), sqlx::Error> {
     tide::log::start();
@@ -43,6 +55,8 @@ async fn main() -> Result<(), sqlx::Error> {
         post_register_url,
         post_reset_password_url,
         post_set_password_url,
+        jwt_expires_in_minutes: get_jwt_expires(),
+        refresh_expires_in_days: get_refresh_expires(),
     });
 
     app.at("/livez").get(live);

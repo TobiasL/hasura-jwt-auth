@@ -11,15 +11,21 @@ pub struct RefreshUserRow {
     pub org_id: Option<Uuid>,
 }
 
-const ADD_REFRESH_TOKEN_QUERY: &str = "
-  INSERT INTO refresh_tokens (user_id, expires_at)
-  VALUES ($1, current_timestamp + interval '60 days')
-  RETURNING refresh_token;
-";
-
 #[derive(Serialize, sqlx::Type, sqlx::FromRow)]
 struct RefreshToken {
     refresh_token: Uuid,
+}
+
+pub async fn create_refresh_token(db: &PgPool, refresh_expires_in_days: &u64, user_id: &Uuid) -> Result<Uuid> {
+    let add_refresh_token_query = format!(
+        "INSERT INTO refresh_tokens (user_id, expires_at)
+        VALUES ($1, current_timestamp + interval '{refresh_expires_in_days} days')
+        RETURNING refresh_token;"
+    );
+
+    let token: RefreshToken = sqlx::query_as(&add_refresh_token_query).bind(user_id).fetch_one(db).await?;
+
+    Ok(token.refresh_token)
 }
 
 const GET_REFRESH_TOKEN_QUERY: &str = "
@@ -27,12 +33,6 @@ const GET_REFRESH_TOKEN_QUERY: &str = "
   LEFT JOIN users ON users.id = refresh_tokens.user_id
   WHERE refresh_token = $1 AND expires_at > current_timestamp;
 ";
-
-pub async fn create_refresh_token(db: &PgPool, user_id: &Uuid) -> Result<Uuid> {
-    let token: RefreshToken = sqlx::query_as(ADD_REFRESH_TOKEN_QUERY).bind(user_id).fetch_one(db).await?;
-
-    Ok(token.refresh_token)
-}
 
 fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
     match configured_table_conn {

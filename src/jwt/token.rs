@@ -21,6 +21,7 @@ struct HasuraClaim {
 
 pub fn create_token(
     jwt_secret: &String,
+    jwt_expires_in_minutes: &u64,
     user_id: Uuid,
     default_role: String,
     org_id: Option<Uuid>,
@@ -36,7 +37,7 @@ pub fn create_token(
         },
     };
 
-    let claims = Claims::with_custom_claims(my_claim, Duration::from_mins(15));
+    let claims = Claims::with_custom_claims(my_claim, Duration::from_mins(*jwt_expires_in_minutes));
 
     key.authenticate(claims)
 }

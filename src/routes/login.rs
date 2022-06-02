@@ -17,6 +17,8 @@ pub async fn login(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
     let table_conn = req.state().table_conn.clone();
+    let jwt_expires_in_minutes = req.state().jwt_expires_in_minutes.clone();
+    let refresh_expires_in_days = req.state().refresh_expires_in_days.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
     match get_user(&db, &table_conn, &credentials.email).await? {
@@ -33,7 +35,16 @@ pub async fn login(mut req: Request<State>) -> Result {
                 return Ok(Response::builder(401).body("Wrong password").build());
             }
 
-            let user_session = create_session(&db, &jwt_secret, &id, &default_role, &org_id).await?;
+            let user_session = create_session(
+                &db,
+                &jwt_secret,
+                &jwt_expires_in_minutes,
+                &refresh_expires_in_days,
+                &id,
+                &default_role,
+                &org_id,
+            )
+            .await?;
 
             Ok(Response::builder(200).body(json!(user_session)).build())
         }

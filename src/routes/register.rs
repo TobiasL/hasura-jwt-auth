@@ -23,6 +23,8 @@ struct SendRegisterEmailPayload {
 pub async fn register(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
+    let jwt_expires_in_minutes = req.state().jwt_expires_in_minutes.clone();
+    let refresh_expires_in_days = req.state().refresh_expires_in_days.clone();
     let post_register_url = req.state().post_register_url.clone();
     let credentials: LoginCredentials = req.body_json().await?;
 
@@ -31,7 +33,16 @@ pub async fn register(mut req: Request<State>) -> Result {
     let user = create_user(&db, &credentials.email, hashed_password, credentials.name).await?;
 
     // The user is not connected to an organisation directly after registration.
-    let user_session = create_session(&db, &jwt_secret, &user.id, &user.default_role, &None).await?;
+    let user_session = create_session(
+        &db,
+        &jwt_secret,
+        &jwt_expires_in_minutes,
+        &refresh_expires_in_days,
+        &user.id,
+        &user.default_role,
+        &None,
+    )
+    .await?;
 
     match post_register_url {
         None => Ok(Response::builder(200).body(json!(user_session)).build()),

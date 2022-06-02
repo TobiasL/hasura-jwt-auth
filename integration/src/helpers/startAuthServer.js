@@ -9,6 +9,11 @@ const startAuthServer = async (extendedEnv) => new Promise(async (resolve, rejec
   const server = spawn('cargo', ['run'], { env })
     .on('exit', (code) => reject(code))
 
+  if (process.env.DEBUG) {
+    server.stdout.on('data', (data) => console.log(`stdout: ${data}`))
+    server.stderr.on('data', (data) => console.error(`stderr: ${data}`))
+  }
+
   const url = `http://127.0.0.1:${port}`
 
   while (!server.exitCode) {

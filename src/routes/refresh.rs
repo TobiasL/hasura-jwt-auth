@@ -16,6 +16,8 @@ pub async fn refresh(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let jwt_secret = req.state().jwt_secret.clone();
     let table_conn = req.state().table_conn.clone();
+    let jwt_expires_in_minutes = req.state().jwt_expires_in_minutes.clone();
+    let refresh_expires_in_days = req.state().refresh_expires_in_days.clone();
     let credentials: RefreshPayload = req.body_json().await?;
 
     match get_refresh_token(&db, &table_conn, &credentials.refresh).await? {
@@ -25,7 +27,16 @@ pub async fn refresh(mut req: Request<State>) -> Result {
             default_role,
             org_id,
         }) => {
-            let user_session = create_session(&db, &jwt_secret, &user_id, &default_role, &org_id).await?;
+            let user_session = create_session(
+                &db,
+                &jwt_secret,
+                &jwt_expires_in_minutes,
+                &refresh_expires_in_days,
+                &user_id,
+                &default_role,
+                &org_id,
+            )
+            .await?;
 
             Ok(Response::builder(200).body(json!(user_session)).build())
         }
