@@ -1,3 +1,7 @@
 .github
 target
 integration
+docker-compose.yaml
+LICENSE
+README.md
+rustfmt.toml
