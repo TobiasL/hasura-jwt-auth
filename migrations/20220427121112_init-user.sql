@@ -1,10 +1,10 @@
-CREATE EXTENSION citext;
-CREATE EXTENSION pgcrypto;
+CREATE EXTENSION IF NOT EXISTS citext;
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-CREATE DOMAIN email AS citext
+CREATE DOMAIN email_type AS citext
   CHECK ( value ~ '^[a-zA-Z0-9.!#$%&''*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$' );
 
-CREATE FUNCTION public.set_current_timestamp_updated_at ()
+CREATE OR REPLACE FUNCTION public.set_current_timestamp_updated_at ()
   RETURNS TRIGGER
   LANGUAGE plpgsql
   AS $$
@@ -19,7 +19,7 @@ $$;
 
 CREATE TABLE public.users (
   id uuid DEFAULT public.gen_random_uuid() NOT NULL PRIMARY KEY,
-  email email UNIQUE,
+  email email_type UNIQUE,
   password_hash text NOT NULL,
   name text NOT NULL,
   avatar_url text DEFAULT '' NOT NULL,
