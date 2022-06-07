@@ -61,7 +61,7 @@ it('Register a user connected to an organisation and login', async () => {
       'x-hasura-allowed-roles': ['user'],
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
-      'x-hasura-organisation-id': ORG_ID,
+      'x-hasura-org-id': ORG_ID,
     },
   })
 
@@ -113,7 +113,7 @@ it('Register a user connected to an organisation and refresh', async () => {
       'x-hasura-allowed-roles': ['user'],
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
-      'x-hasura-organisation-id': ORG_ID,
+      'x-hasura-org-id': ORG_ID,
     },
   })
 

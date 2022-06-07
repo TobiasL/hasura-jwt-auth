@@ -9,7 +9,7 @@ struct HasuraUserClaim {
     default_role: String,
     #[serde(rename(serialize = "x-hasura-user-id"))]
     user_id: String,
-    #[serde(rename(serialize = "x-hasura-organisation-id"))]
+    #[serde(rename(serialize = "x-hasura-org-id"))]
     org_id: Option<String>,
 }
 

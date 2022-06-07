@@ -50,7 +50,7 @@ it('Register a user and login', async () => {
       'x-hasura-allowed-roles': ['user'],
       'x-hasura-default-role': 'user',
       'x-hasura-user-id': expect.any(String),
-      'x-hasura-organisation-id': null,
+      'x-hasura-org-id': null,
     },
   })
 

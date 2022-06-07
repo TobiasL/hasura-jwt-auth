@@ -23,7 +23,7 @@ TODO: Publish to Docker Hub.
 * `JWT_EXPIRES_IN_MINUTES` how many minutes until a JWT token expires.
 * `REFRESH_EXPIRES_IN_DAYS` how many days until a refresh token expires.
 * `JWT_ORG_CUSTOM_CLAIM` string to indicate which table and column to fetch an organisation ID from.
-For example `user_metadata.org_id` fetches the value and adds it to the claim `x-hasura-organisation-id`.
+For example `user_metadata.org_id` fetches the value and adds it to the claim `X-Hasura-Org-Id`.
 Need a foreign key that points to the uuid columns `user.id`.
 * `POST_REGISTER_URL` URL that will receive the email and id for newly created user.
 * `POST_RESET_PASSWORD_URL` URL that will receive the email and ticket for the password that was reset.
