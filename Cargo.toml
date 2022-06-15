@@ -14,3 +14,4 @@ jwt-simple = "0.10.9"
 bcrypt = "0.12"
 surf = { version = "2.3.2", features = ["hyper-client"] }
 curl = { version = "0.4.43", default-features = false, features = ["static-curl", "static-ssl", "http2"] }
+serde_with = "1.14.0"

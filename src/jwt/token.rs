@@ -1,6 +1,8 @@
 use jwt_simple::prelude::*;
+use serde_with::skip_serializing_none;
 use sqlx::types::Uuid;
 
+#[skip_serializing_none]
 #[derive(Serialize, Deserialize)]
 struct HasuraUserClaim {
     #[serde(rename(serialize = "x-hasura-allowed-roles"))]
