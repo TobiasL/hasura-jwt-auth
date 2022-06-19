@@ -68,7 +68,7 @@ it('Register a user connected to an organisation and login', async () => {
   server.kill()
 })
 
-it('Register a user connected to an organisation and refresh', async () => {
+it('Register a user connected to an organisation and use the refresh token', async () => {
   await knexClient.raw(USER_ORG_MIGRATION)
 
   const { url, server } = await startAuthServer({
@@ -94,28 +94,6 @@ it('Register a user connected to an organisation and refresh', async () => {
 
   expect(refreshResponse.refresh).toEqual(expect.any(String))
   expect(refreshResponse.jwt_token).toEqual(expect.any(String))
-
-  const [header, payload] = refreshResponse.jwt_token.split('.')
-
-  const decodedJwtHeader = Buffer.from(header, 'base64').toString('utf-8')
-  const decodedJwtPayload = Buffer.from(payload, 'base64').toString('utf-8')
-
-  expect(JSON.parse(decodedJwtHeader)).toEqual({
-    alg: 'HS256',
-    typ: 'JWT',
-  })
-
-  expect(JSON.parse(decodedJwtPayload)).toEqual({
-    iat: expect.any(Number),
-    exp: expect.any(Number),
-    nbf: expect.any(Number),
-    'https://hasura.io/jwt/claims': {
-      'x-hasura-allowed-roles': ['user'],
-      'x-hasura-default-role': 'user',
-      'x-hasura-user-id': expect.any(String),
-      'x-hasura-org-id': ORG_ID,
-    },
-  })
 
   server.kill()
 })

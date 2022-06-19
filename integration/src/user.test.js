@@ -55,3 +55,27 @@ it('Register a user and login', async () => {
 
   server.kill()
 })
+
+it('Register a user and use the refresh token', async () => {
+  const { url, server } = await startAuthServer({
+    JWT_SECRET: 'TEST_JWT_VALUE',
+    DATABASE_URL,
+  })
+
+  const { data: registerResponse, status: registerStatus } = await axios.post(`${url}/register`, {
+    email: 'lars@domain.com',
+    password: 'lars',
+    name: 'Lars Larsson',
+  })
+
+  expect(registerStatus).toEqual(200)
+
+  const { data: refreshResponse } = await axios.post(`${url}/refresh`, {
+    refresh: registerResponse.refresh,
+  })
+
+  expect(refreshResponse.refresh).toEqual(expect.any(String))
+  expect(refreshResponse.jwt_token).toEqual(expect.any(String))
+
+  server.kill()
+})

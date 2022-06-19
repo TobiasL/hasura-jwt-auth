@@ -29,7 +29,7 @@ pub async fn create_refresh_token(db: &PgPool, refresh_expires_in_days: &u64, us
 }
 
 const GET_REFRESH_TOKEN_QUERY: &str = "
-  SELECT refresh_tokens.user_id, users.default_role FROM refresh_tokens
+  SELECT refresh_tokens.user_id, users.default_role, NULL AS org_id FROM refresh_tokens
   LEFT JOIN users ON users.id = refresh_tokens.user_id
   WHERE refresh_token = $1 AND expires_at > current_timestamp;
 ";
