@@ -4,9 +4,49 @@ Auth server that return JWT tokens to be used by Hasura.
 
 ## Setup
 
-TODO: Add a whole docker-compose YAML as an example.
+### Docker image
 
-TODO: Publish to Docker Hub.
+A Docker image for the architectures `linux/amd64` and `linux/arm64` are published to Docker Hub: https://hub.docker.com/r/tobiasli/hasura-jwt-auth
+
+### Docker Compose
+
+Example of a Docker Compose setup:
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    ports:
+    - "5432:5432"
+    environment:
+      POSTGRES_DB: test_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+
+  graphql-engine:
+    image: hasura/graphql-engine
+    ports:
+    - "8080:8080"
+    depends_on:
+    - "postgres"
+    - "auth"
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/test_db
+      HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
+      HASURA_GRAPHQL_ADMIN_SECRET: PLACEHOLDER_ADMIN_SECRET
+      HASURA_GRAPHQL_JWT_SECRET: >-
+        { "type": "HS256", "key": "PLACEHOLDER_JWT_SECRET_KEY_TO_REPLACE" }
+
+  auth:
+    image: tobiasli/hasura-jwt-auth
+    ports:
+    - "3030:80"
+    environment:
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/test_db
+      JWT_SECRET: PLACEHOLDER_JWT_SECRET_KEY_TO_REPLACE
+```
 
 ## Environment variables
 
