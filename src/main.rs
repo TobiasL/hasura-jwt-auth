@@ -20,6 +20,13 @@ fn get_listen_address() -> String {
     format!("{host}:{port}")
 }
 
+#[test]
+fn test_default_listen_address() -> Result<(), String> {
+    assert_eq!(get_listen_address(), "0.0.0.0:80");
+
+    Ok(())
+}
+
 fn get_jwt_expires() -> u64 {
     let jwt_expires_in_minutes = env::var("JWT_EXPIRES_IN_MINUTES").ok();
 

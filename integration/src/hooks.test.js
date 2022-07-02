@@ -1,6 +1,6 @@
 const axios = require('axios')
 
-const { knexClient, DATABASE_URL } = require('./helpers/knexClient')
+const { DATABASE_URL } = require('./helpers/knexClient')
 const databaseLifecycle = require('./helpers/databaseLifecycle')
 const startAuthServer = require('./helpers/startAuthServer')
 const startMockServer = require('./helpers/startMockServer')

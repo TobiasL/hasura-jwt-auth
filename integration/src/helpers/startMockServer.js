@@ -1,7 +1,7 @@
 const express = require('express')
 const getPort = require('get-port')
 
-const startMockServer = async (mockUrl, mockFunction) =>  {
+const startMockServer = async (mockUrl, mockFunction) => {
   const port = await getPort()
 
   const app = express()
@@ -17,6 +17,5 @@ const startMockServer = async (mockUrl, mockFunction) =>  {
 
   return { server, url: `http://localhost:${port}${mockUrl}` }
 }
-
 
 module.exports = startMockServer
