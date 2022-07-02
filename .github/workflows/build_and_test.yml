@@ -1,6 +1,6 @@
 name: Continuous Integration
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   build_and_test:
@@ -61,6 +61,9 @@ jobs:
 
       - name: Install dependencies to run integration tests
         run: npm install -prefix integration/
+
+      - name: Run lint
+        run: npm run lint -prefix integration/
 
       - name: Run integration tests
         run: npm test -prefix integration/
