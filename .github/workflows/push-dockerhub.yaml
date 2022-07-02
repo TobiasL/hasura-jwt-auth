@@ -1,9 +1,8 @@
 name: Push to DockerHub
 
 on:
-  push:
-    branches:
-      - 'main'
+  release:
+    types: [published]
 
 jobs:
   docker:
@@ -29,6 +28,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           pull: true
           push: true
-          tags: tobiasli/hasura-jwt-auth:latest
+          tags: tobiasli/hasura-jwt-auth:latest,tobiasli/hasura-jwt-auth:${{ github.ref }}
           cache-from: type=gha
           cache-to: type=gha
