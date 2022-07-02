@@ -8,6 +8,7 @@ use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use surf;
+use tide::convert::json;
 use tide::{Request, Response, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -21,6 +22,11 @@ struct SendResetEmailPayload {
     ticket: String,
 }
 
+#[derive(Debug, Serialize)]
+struct SendResetTicketPayload {
+    ticket: String,
+}
+
 pub async fn reset(mut req: Request<State>) -> Result {
     let db = req.state().db.clone();
     let post_reset_password_url = req.state().post_reset_password_url.clone();
@@ -30,9 +36,11 @@ pub async fn reset(mut req: Request<State>) -> Result {
         None => Ok(Response::builder(401).body("User not found").build()),
         Some(user) => {
             let ticket = set_user_ticket(&db, &user.id).await?;
-
+            let ticket_payload = SendResetTicketPayload {
+                ticket: ticket.to_string(),
+            };
             match post_reset_password_url {
-                None => Ok(Response::builder(200).build()),
+                None => Ok(Response::builder(200).body(json!(&ticket_payload)).build()),
                 Some(url) => {
                     let payload = SendResetEmailPayload {
                         email: credentials.email,
@@ -41,7 +49,7 @@ pub async fn reset(mut req: Request<State>) -> Result {
 
                     surf::post(url).body_json(&payload)?.await?;
 
-                    Ok(Response::builder(200).build())
+                    Ok(Response::builder(200).body(json!(&ticket_payload)).build())
                 }
             }
         }

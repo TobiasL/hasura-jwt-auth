@@ -23,11 +23,8 @@ it('Call external service if POST_RESET_PASSWORD_URL is set', async () => {
     name: 'Lars Larsson',
   })
 
-  const { status: resetStatus } = await axios.post(`${url}/reset-password`, {
-    email: 'lars@domain.com',
-  })
+  await axios.post(`${url}/reset-password`, { email: 'lars@domain.com' })
 
-  expect(resetStatus).toEqual(200)
   expect(externalServiceMock).toHaveBeenCalledWith({
     email: 'lars@domain.com',
     ticket: expect.any(String),
@@ -53,13 +50,12 @@ it('Call external service if POST_SET_PASSWORD_URL is set', async () => {
     name: 'Lars Larsson',
   })
 
-  await axios.post(`${url}/reset-password`, { email: 'lars@domain.com' })
-
-  const { ticket } = await knexClient('users').select('ticket')
-    .where('email', 'lars@domain.com').first()
+  const { data: resetResponse } = await axios.post(`${url}/reset-password`, {
+    email: 'lars@domain.com',
+  })
 
   const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
-    ticket,
+    ticket: resetResponse.ticket,
     password: 'new-magic-password',
   })
 

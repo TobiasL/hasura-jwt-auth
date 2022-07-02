@@ -20,17 +20,14 @@ it('Reset password and login with the new password', async () => {
 
   expect(registerStatus).toEqual(200)
 
-  const { status: resetStatus } = await axios.post(`${url}/reset-password`, {
+  const { data: resetResponse } = await axios.post(`${url}/reset-password`, {
     email: 'lars@domain.com',
   })
 
-  expect(resetStatus).toEqual(200)
-
-  const { ticket: ticketSentToEmail } = await knexClient('users').select('ticket')
-    .where('email', 'lars@domain.com').first()
+  expect(resetResponse.ticket).toEqual(expect.any(String))
 
   const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
-    ticket: ticketSentToEmail,
+    ticket: resetResponse.ticket,
     password: 'new-magic-password',
   })
 
