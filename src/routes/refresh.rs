@@ -1,4 +1,4 @@
-use crate::db::refresh_tokens::get_refresh_token;
+use crate::db::refresh_tokens::get_and_delete_refresh_token;
 use crate::db::refresh_tokens::RefreshUserRow;
 use crate::jwt::session::create_session;
 use crate::state::State;
@@ -20,7 +20,7 @@ pub async fn refresh(mut req: Request<State>) -> Result {
     let refresh_expires_in_days = req.state().refresh_expires_in_days.clone();
     let credentials: RefreshPayload = req.body_json().await?;
 
-    match get_refresh_token(&db, &table_conn, &credentials.refresh).await? {
+    match get_and_delete_refresh_token(&db, &table_conn, &credentials.refresh).await? {
         None => Err(Error::from_str(401, "Refresh token not found")),
         Some(RefreshUserRow {
             user_id,

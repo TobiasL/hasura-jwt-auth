@@ -31,7 +31,7 @@ pub async fn create_refresh_token(db: &PgPool, refresh_expires_in_days: &u64, us
 const GET_REFRESH_TOKEN_QUERY: &str = "
   SELECT refresh_tokens.user_id, users.default_role, NULL AS org_id FROM refresh_tokens
   LEFT JOIN users ON users.id = refresh_tokens.user_id
-  WHERE refresh_token = $1 AND expires_at > current_timestamp;
+  WHERE refresh_token = $1 AND expires_at > current_timestamp FOR UPDATE OF refresh_tokens;
 ";
 
 fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
@@ -45,22 +45,38 @@ fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
                 "SELECT refresh_tokens.user_id, users.default_role, org_table.{column_name} AS org_id
                   FROM refresh_tokens LEFT JOIN users ON users.id = refresh_tokens.user_id
                   LEFT JOIN {table_name} AS org_table ON org_table.user_id = users.id
-                  WHERE refresh_token = $1 AND expires_at > current_timestamp;"
+                  WHERE refresh_token = $1 AND expires_at > current_timestamp FOR UPDATE OF refresh_tokens;"
             )
         }
     }
 }
 
-pub async fn get_refresh_token(
+const DELETE_REFRESH_TOKEN_QUERY: &str = "
+  DELETE FROM refresh_tokens WHERE refresh_token = $1 AND expires_at > current_timestamp;
+";
+
+pub async fn get_and_delete_refresh_token(
     db: &PgPool,
     configured_table_conn: &Option<TableConn>,
     refresh_token: &Uuid,
 ) -> Result<Option<RefreshUserRow>> {
     let user_query = get_user_org_query(&configured_table_conn);
 
-    sqlx::query_as(&user_query)
+    let mut tx = db.begin().await?;
+
+    let user_row = sqlx::query_as(&user_query)
         .bind(refresh_token)
-        .fetch_optional(db)
+        .fetch_optional(&mut tx)
         .await
-        .map_err(|_err| Error::from_str(500, "Error getting refresh token"))
+        .map_err(|_err| Error::from_str(500, "Error getting refresh token"))?;
+
+    sqlx::query(DELETE_REFRESH_TOKEN_QUERY)
+        .bind(refresh_token)
+        .execute(&mut tx)
+        .await
+        .map_err(|_err| Error::from_str(500, "Error deleting refresh token"))?;
+
+    tx.commit().await?;
+
+    Ok(user_row)
 }
