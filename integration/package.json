@@ -11,7 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "0.27.2",
-    "express": "4.18.1",
+    "external-mock": "0.1.0",
     "get-port": "5.1.1",
     "jest": "28.0.3",
     "jsonwebtoken": "8.5.1",
