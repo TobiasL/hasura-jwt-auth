@@ -75,6 +75,9 @@ Need a foreign key that points to the uuid columns `user.id`.
 
 Liveness probe.
 
+cURL is included in the Docker image to be used for Docker healthchecks.
+Example: `curl --fail http://localhost:80/livez`.
+
 ### GET `/readyz`
 
 Readiness probe.
