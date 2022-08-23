@@ -3,8 +3,8 @@ mod jwt;
 mod routes;
 mod state;
 
-use db::init::check_org_column;
 use db::init::connect_and_migrate;
+use db::init::get_org_table_info;
 use routes::live::live;
 use routes::login::login;
 use routes::ready::ready;
@@ -53,7 +53,7 @@ async fn main() -> Result<(), sqlx::Error> {
     let org_table_column = env::var("JWT_ORG_CUSTOM_CLAIM").ok();
 
     let pg_pool = connect_and_migrate(&db_url, database_connections).await?;
-    let table_conn = check_org_column(&pg_pool, org_table_column).await?;
+    let table_conn = get_org_table_info(org_table_column);
 
     let mut app = tide::with_state(state::State {
         db: pg_pool,

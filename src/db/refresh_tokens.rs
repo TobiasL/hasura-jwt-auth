@@ -1,4 +1,4 @@
-use crate::db::init::TableConn;
+use crate::db::init::OrgTableInfo;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
@@ -34,10 +34,10 @@ const GET_REFRESH_TOKEN_QUERY: &str = "
   WHERE refresh_token = $1 AND expires_at > current_timestamp FOR UPDATE OF refresh_tokens;
 ";
 
-fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
+fn get_user_org_query(configured_table_conn: &Option<OrgTableInfo>) -> String {
     match configured_table_conn {
         None => GET_REFRESH_TOKEN_QUERY.to_string(),
-        Some(TableConn {
+        Some(OrgTableInfo {
             column_name,
             table_name,
         }) => {
@@ -57,7 +57,7 @@ const DELETE_REFRESH_TOKEN_QUERY: &str = "
 
 pub async fn get_and_delete_refresh_token(
     db: &PgPool,
-    configured_table_conn: &Option<TableConn>,
+    configured_table_conn: &Option<OrgTableInfo>,
     refresh_token: &Uuid,
 ) -> Result<Option<RefreshUserRow>> {
     let user_query = get_user_org_query(&configured_table_conn);
