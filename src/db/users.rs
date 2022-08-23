@@ -1,4 +1,4 @@
-use crate::db::init::TableConn;
+use crate::db::init::OrgTableInfo;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
@@ -14,10 +14,10 @@ pub struct UserRow {
 
 const GET_USER_QUERY: &str = "SELECT *, NULL AS org_id FROM users WHERE email = $1;";
 
-fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
+fn get_user_org_query(configured_table_conn: &Option<OrgTableInfo>) -> String {
     match configured_table_conn {
         None => GET_USER_QUERY.to_string(),
-        Some(TableConn {
+        Some(OrgTableInfo {
             column_name,
             table_name,
         }) => {
@@ -30,7 +30,7 @@ fn get_user_org_query(configured_table_conn: &Option<TableConn>) -> String {
     }
 }
 
-pub async fn get_user(db: &PgPool, table_conn: &Option<TableConn>, email: &String) -> Result<Option<UserRow>> {
+pub async fn get_user(db: &PgPool, table_conn: &Option<OrgTableInfo>, email: &String) -> Result<Option<UserRow>> {
     let user_query = get_user_org_query(table_conn);
 
     sqlx::query_as(&user_query)
