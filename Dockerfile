@@ -37,13 +37,9 @@ RUN cargo install --target aarch64-unknown-linux-gnu --path .
 
 FROM --platform=amd64 debian:stable as final-amd64
 
-RUN apt-get update && apt-get install -y curl
-
 COPY --from=build /app/target/x86_64-unknown-linux-gnu/release/hasura-jwt-auth .
 
 FROM --platform=arm64 debian:stable as final-arm64
-
-RUN apt-get update && apt-get install -y curl
 
 COPY --from=build /app/target/aarch64-unknown-linux-gnu/release/hasura-jwt-auth .
 
