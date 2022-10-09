@@ -1,8 +1,9 @@
 [package]
 name = "hasura-jwt-auth"
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Tobias Lindström <me@tobiaslindstrom.se>"]
 edition = "2018"
+repository = "https://github.com/TobiasL/hasura-jwt-auth"
 
 [dependencies]
 sqlx = { version = "0.6.2", features = ["runtime-async-std-native-tls", "postgres", "json", "uuid"] }
