@@ -3,7 +3,6 @@ use crate::jwt::session::create_session;
 use crate::state::State;
 use bcrypt::hash;
 use jwt_simple::prelude::*;
-use surf;
 use tide::convert::json;
 use tide::{Request, Response, Result};
 
@@ -52,7 +51,8 @@ pub async fn register(mut req: Request<State>) -> Result {
                 id: user.id.to_string(),
             };
 
-            surf::post(url).body_json(&payload)?.await?;
+            let client = reqwest::Client::new();
+            client.post(url).json(&payload).send().await?;
 
             Ok(Response::builder(200).body(json!(user_session)).build())
         }

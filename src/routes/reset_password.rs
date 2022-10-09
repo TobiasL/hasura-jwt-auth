@@ -7,7 +7,6 @@ use crate::state::State;
 use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
-use surf;
 use tide::convert::json;
 use tide::{Request, Response, Result};
 
@@ -47,7 +46,8 @@ pub async fn reset(mut req: Request<State>) -> Result {
                         ticket: ticket.to_string(),
                     };
 
-                    surf::post(url).body_json(&payload)?.await?;
+                    let client = reqwest::Client::new();
+                    client.post(url).json(&payload).send().await?;
 
                     Ok(Response::builder(200).body(json!(&ticket_payload)).build())
                 }
@@ -86,7 +86,8 @@ pub async fn set(mut req: Request<State>) -> Result {
                 Some(url) => {
                     let payload = SendSetEmailPayload { email };
 
-                    surf::post(url).body_json(&payload)?.await?;
+                    let client = reqwest::Client::new();
+                    client.post(url).json(&payload).send().await?;
 
                     Ok(Response::builder(200).build())
                 }
