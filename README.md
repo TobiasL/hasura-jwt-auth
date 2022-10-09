@@ -37,7 +37,7 @@ services:
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true"
       HASURA_GRAPHQL_ADMIN_SECRET: PLACEHOLDER_ADMIN_SECRET
       HASURA_GRAPHQL_JWT_SECRET: >-
-        { "type": "HS256", "key": "PLACEHOLDER_JWT_SECRET_KEY_TO_REPLACE" }
+        { "type": "HS256", "header": {"type": "Cookie", "name": "jwt" }, "key": "PLACEHOLDER_JWT_SECRET_KEY_TO_REPLACE" }
 
   auth:
     image: tobiasli/hasura-jwt-auth
@@ -75,9 +75,6 @@ Need a foreign key that points to the uuid columns `user.id`.
 
 Liveness probe.
 
-cURL is included in the Docker image to be used for Docker healthchecks.
-Example: `curl --fail http://localhost:80/livez`.
-
 ### GET `/readyz`
 
 Readiness probe.
@@ -96,14 +93,8 @@ Register an account and get the JWT token and refresh token.
 ```
 
 ### Response
-```json
-{
-  "jwt_token": "string",
-  "jwt_token_expires_minutes": "integer",
-  "refresh": "string",
-  "refresh_expires_days": "integer"
-}
-```
+
+See [cookie responses](#cookie-responses).
 
 ### POST `/login`
 
@@ -118,35 +109,20 @@ Login with email and password to get the JWT token and refresh token.
 ```
 
 ### Response
-```json
-{
-  "jwt_token": "string",
-  "jwt_token_expires_minutes": "integer",
-  "refresh": "string",
-  "refresh_expires_days": "integer"
-}
-```
+
+See [cookie responses](#cookie-responses).
 
 ### POST `/refresh`
 
 Call with the refresh token to get a new JWT token.
 
 ### Request
-```json
-{
-  "refresh": "string"
-}
-```
+
+The `refresh` cookie is used.
 
 ### Response
-```json
-{
-  "jwt_token": "string",
-  "jwt_token_expires_minutes": "integer",
-  "refresh": "string",
-  "refresh_expires_days": "integer"
-}
-```
+
+See [cookie responses](#cookie-responses).
 
 ### POST `/reset-password`
 
@@ -179,9 +155,33 @@ Sets the users new password with the ticket received from `/reset-password`.
 }
 ```
 
+### POST `/logout`
+
+Call to clear all cookies.
+
 ### Response
 
-Status code 200 or 401.
+See [cookie responses](#cookie-responses).
+
+## Cookie responses
+
+The `jwt_expiry` and `refresh_expiry` cookies exist to be able to be accessed in JavaScript
+to check how long the `jwt` and `refresh` cookies are valid.
+The `jwt` and `refresh` tokens are HttpOnly and can't be accessed through JavaScript.
+
+### Register, login and refresh `set-cookie` header
+
+  * `jwt={JWT_VALUE}; Max-Age={JWT_EXPIRY}; Path=/; SameSite=strict; HttpOnly;`
+  * `refresh={REFRESH_TOKEN}; Max-Age={REFRESH_EXPIRY}; Path=/; SameSite=strict; HttpOnly;`
+  * `jwt_expiry={JWT_EXPIRY}; Max-Age={JWT_EXPIRY}; Path=/; SameSite=strict;`
+  * `refresh_expiry={REFRESH_EXPIRY}; Max-Age={REFRESH_EXPIRY}; Path=/; SameSite=strict;`
+
+### Logout `set-cookie` header
+
+  * `jwt=; Max-Age=-1; Path=/;`
+  * `refresh=; Max-Age=-1; Path=/;`
+  * `jwt_expiry=; Max-Age=-1; Path=/;`
+  * `refresh_expiry=; Max-Age=-1; Path=/;`
 
 ## Hasura documentation on how to use JWT tokens
 

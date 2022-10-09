@@ -1,8 +1,8 @@
 use crate::db::init::OrgTableInfo;
+use actix_web::{error, Error};
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
-use tide::{Error, Result};
 
 #[derive(Serialize, sqlx::FromRow)]
 pub struct UserRow {
@@ -30,14 +30,18 @@ fn get_user_org_query(configured_table_conn: &Option<OrgTableInfo>) -> String {
     }
 }
 
-pub async fn get_user(db: &PgPool, table_conn: &Option<OrgTableInfo>, email: &String) -> Result<Option<UserRow>> {
+pub async fn get_user(
+    db: &PgPool,
+    table_conn: &Option<OrgTableInfo>,
+    email: &String,
+) -> Result<Option<UserRow>, Error> {
     let user_query = get_user_org_query(table_conn);
 
     sqlx::query_as(&user_query)
         .bind(email)
         .fetch_optional(db)
         .await
-        .map_err(|_err| Error::from_str(500, "Error getting user"))
+        .map_err(|_err| error::ErrorInternalServerError("Error getting user"))
 }
 
 #[derive(Serialize, sqlx::Type, sqlx::FromRow)]
@@ -55,16 +59,16 @@ const ADD_USER_QUERY: &str = "
 pub async fn create_user(
     db: &PgPool,
     email: &String,
-    hashed_password: String,
-    name: String,
-) -> Result<LoggedInUserRow> {
+    hashed_password: &String,
+    name: &String,
+) -> Result<LoggedInUserRow, Error> {
     let user = sqlx::query_as(ADD_USER_QUERY)
         .bind(email)
         .bind(hashed_password)
         .bind(name)
         .fetch_one(db)
         .await
-        .map_err(|_err| Error::from_str(400, "User with email already exists"))?;
+        .map_err(|_err| error::ErrorBadRequest("User with email already exists"))?;
 
     Ok(user)
 }

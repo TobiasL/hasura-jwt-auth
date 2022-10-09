@@ -1,4 +1,4 @@
-const axios = require('axios')
+const got = require('got')
 const { createMock, cleanExternalMocks } = require('external-mock')
 
 const { DATABASE_URL } = require('./helpers/knexClient')
@@ -20,13 +20,15 @@ it('Call external service if POST_RESET_PASSWORD_URL is set', async () => {
     POST_RESET_PASSWORD_URL: 'http://localhost:5454/reset-password',
   })
 
-  await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  await got.post(`${url}/register`, {
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
-  await axios.post(`${url}/reset-password`, { email: 'lars@domain.com' })
+  await got.post(`${url}/reset-password`, { json: { email: 'lars@domain.com' } })
 
   expect(externalServiceMock).toHaveBeenCalledWith({
     email: 'lars@domain.com',
@@ -47,19 +49,23 @@ it('Call external service if POST_SET_PASSWORD_URL is set', async () => {
     POST_SET_PASSWORD_URL: 'http://localhost:5454/set-password',
   })
 
-  await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  await got.post(`${url}/register`, {
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
-  const { data: resetResponse } = await axios.post(`${url}/reset-password`, {
-    email: 'lars@domain.com',
-  })
+  const resetResponse = await got.post(`${url}/reset-password`, {
+    json: { email: 'lars@domain.com' },
+  }).json()
 
-  const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
-    ticket: resetResponse.ticket,
-    password: 'new-magic-password',
+  const { statusCode: setPasswordStatus } = await got.post(`${url}/password`, {
+    json: {
+      ticket: resetResponse.ticket,
+      password: 'new-magic-password',
+    },
   })
 
   expect(setPasswordStatus).toEqual(200)
@@ -81,10 +87,12 @@ it('Call external service if POST_REGISTER_URL is set', async () => {
     POST_REGISTER_URL: 'http://localhost:5454/register',
   })
 
-  const { status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
