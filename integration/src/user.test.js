@@ -1,9 +1,11 @@
-const axios = require('axios')
+const got = require('got')
 const jwt = require('jsonwebtoken')
+const toughCookie = require('tough-cookie')
 
 const { DATABASE_URL } = require('./helpers/knexClient')
 const databaseLifecycle = require('./helpers/databaseLifecycle')
 const startAuthServer = require('./helpers/startAuthServer')
+const getCookieValues = require('./helpers/getCookieValues')
 
 databaseLifecycle()
 
@@ -13,26 +15,35 @@ it('Register a user and login', async () => {
     DATABASE_URL,
   })
 
-  const { status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const cookieJar = new toughCookie.CookieJar()
+
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    cookieJar,
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
 
-  const { data: loginResponse } = await axios.post(`${url}/login`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-  })
+  const cookieString = await cookieJar.getCookieString(url)
 
-  expect(loginResponse.refresh).toEqual(expect.any(String))
-  expect(loginResponse.jwt_token).toEqual(expect.any(String))
+  const {
+    refresh, refreshExpiry, jwtToken, jwtExpiry,
+  } = getCookieValues(cookieString)
+
+  expect(refresh).toEqual(expect.any(String))
+  expect(refresh).toHaveLength(36)
+  expect(jwtToken).toEqual(expect.any(String))
+  expect(jwtExpiry).toBeGreaterThan(Date.now())
+  expect(refreshExpiry).toBeGreaterThan(Date.now())
 
   // Throws if the signature doesn't match.
-  jwt.verify(loginResponse.jwt_token, 'TEST_JWT_VALUE')
+  jwt.verify(jwtToken, 'TEST_JWT_VALUE')
 
-  const [header, payload] = loginResponse.jwt_token.split('.')
+  const [header, payload] = jwtToken.split('.')
 
   const decodedJwtHeader = Buffer.from(header, 'base64').toString('utf-8')
   const decodedJwtPayload = Buffer.from(payload, 'base64').toString('utf-8')
@@ -62,20 +73,22 @@ it('Register a user and use the refresh token', async () => {
     DATABASE_URL,
   })
 
-  const { data: registerResponse, status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const cookieJar = new toughCookie.CookieJar()
+
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    cookieJar,
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
 
-  const { data: refreshResponse } = await axios.post(`${url}/refresh`, {
-    refresh: registerResponse.refresh,
-  })
+  const { statusCode: refreshStatus } = await got.post(`${url}/refresh`, { cookieJar })
 
-  expect(refreshResponse.refresh).toEqual(expect.any(String))
-  expect(refreshResponse.jwt_token).toEqual(expect.any(String))
+  expect(refreshStatus).toEqual(200)
 
   server.kill()
 })

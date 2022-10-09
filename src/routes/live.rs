@@ -1,6 +1,5 @@
-use crate::state::State;
-use tide::{Request, Response, Result};
+use actix_web::HttpResponse;
 
-pub async fn live(_req: Request<State>) -> Result {
-    Ok(Response::builder(200).build())
+pub async fn live() -> HttpResponse {
+    HttpResponse::Ok().finish()
 }

@@ -1,8 +1,8 @@
 use crate::db::init::OrgTableInfo;
+use actix_web::{error, Error};
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
-use tide::{Error, Result};
 
 #[derive(Serialize, sqlx::FromRow)]
 pub struct RefreshUserRow {
@@ -16,14 +16,18 @@ struct RefreshToken {
     refresh_token: Uuid,
 }
 
-pub async fn create_refresh_token(db: &PgPool, refresh_expires_in_days: &u64, user_id: &Uuid) -> Result<Uuid> {
+pub async fn create_refresh_token(db: &PgPool, refresh_expires_in_days: &u64, user_id: &Uuid) -> Result<Uuid, Error> {
     let add_refresh_token_query = format!(
         "INSERT INTO refresh_tokens (user_id, expires_at)
         VALUES ($1, current_timestamp + interval '{refresh_expires_in_days} days')
         RETURNING refresh_token;"
     );
 
-    let token: RefreshToken = sqlx::query_as(&add_refresh_token_query).bind(user_id).fetch_one(db).await?;
+    let token: RefreshToken = sqlx::query_as(&add_refresh_token_query)
+        .bind(user_id)
+        .fetch_one(db)
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     Ok(token.refresh_token)
 }
@@ -59,24 +63,29 @@ pub async fn get_and_delete_refresh_token(
     db: &PgPool,
     configured_table_conn: &Option<OrgTableInfo>,
     refresh_token: &Uuid,
-) -> Result<Option<RefreshUserRow>> {
+) -> Result<Option<RefreshUserRow>, Error> {
     let user_query = get_user_org_query(&configured_table_conn);
 
-    let mut tx = db.begin().await?;
+    let mut tx = db
+        .begin()
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     let user_row = sqlx::query_as(&user_query)
         .bind(refresh_token)
         .fetch_optional(&mut tx)
         .await
-        .map_err(|_err| Error::from_str(500, "Error getting refresh token"))?;
+        .map_err(|_err| error::ErrorInternalServerError("Error getting refresh token"))?;
 
     sqlx::query(DELETE_REFRESH_TOKEN_QUERY)
         .bind(refresh_token)
         .execute(&mut tx)
         .await
-        .map_err(|_err| Error::from_str(500, "Error deleting refresh token"))?;
+        .map_err(|_err| error::ErrorInternalServerError("Error deleting refresh token"))?;
 
-    tx.commit().await?;
+    tx.commit()
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     Ok(user_row)
 }

@@ -1,4 +1,4 @@
-const axios = require('axios')
+const got = require('got')
 
 const { DATABASE_URL } = require('./helpers/knexClient')
 const databaseLifecycle = require('./helpers/databaseLifecycle')
@@ -12,30 +12,38 @@ it('Reset password and login with the new password', async () => {
     DATABASE_URL,
   })
 
-  const { status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
 
-  const { data: resetResponse } = await axios.post(`${url}/reset-password`, {
-    email: 'lars@domain.com',
-  })
+  const resetResponse = await got.post(`${url}/reset-password`, {
+    json: {
+      email: 'lars@domain.com',
+    },
+  }).json()
 
   expect(resetResponse.ticket).toEqual(expect.any(String))
 
-  const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
-    ticket: resetResponse.ticket,
-    password: 'new-magic-password',
+  const { statusCode: setPasswordStatus } = await got.post(`${url}/password`, {
+    json: {
+      ticket: resetResponse.ticket,
+      password: 'new-magic-password',
+    },
   })
 
   expect(setPasswordStatus).toEqual(200)
 
-  const { status: loginStatus } = await axios.post(`${url}/login`, {
-    email: 'lars@domain.com',
-    password: 'new-magic-password',
+  const { statusCode: loginStatus } = await got.post(`${url}/login`, {
+    json: {
+      email: 'lars@domain.com',
+      password: 'new-magic-password',
+    },
   })
 
   expect(loginStatus).toEqual(200)
@@ -49,11 +57,13 @@ it('Fail reset password for a user that doesn\'t exist', async () => {
     DATABASE_URL,
   })
 
-  const { status: resetStatus } = await axios.post(`${url}/reset-password`, {
-    email: 'fake@user.com',
-  }, { validateStatus: (status) => status < 500 })
-
-  expect(resetStatus).toEqual(401)
+  await expect(async () => {
+    await got.post(`${url}/reset-password`, {
+      json: {
+        email: 'fake@user.com',
+      },
+    })
+  }).rejects.toThrow('Response code 401 (Unauthorized)')
 
   server.kill()
 })
@@ -66,12 +76,14 @@ it('Fail set password with an expired ticket', async () => {
 
   const EXPIRED_TICKET = 'be297282-fdb7-48ec-a737-ee4cb893fa0d'
 
-  const { status: setPasswordStatus } = await axios.post(`${url}/password`, {
-    ticket: EXPIRED_TICKET,
-    password: 'new-magic-password',
-  }, { validateStatus: (status) => status < 500 })
-
-  expect(setPasswordStatus).toEqual(401)
+  await expect(async () => {
+    await got.post(`${url}/password`, {
+      json: {
+        ticket: EXPIRED_TICKET,
+        password: 'new-magic-password',
+      },
+    })
+  }).rejects.toThrow('Response code 401 (Unauthorized)')
 
   server.kill()
 })

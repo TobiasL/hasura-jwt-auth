@@ -1,8 +1,11 @@
-const axios = require('axios')
+const got = require('got')
+const jwt = require('jsonwebtoken')
+const toughCookie = require('tough-cookie')
 
 const { knexClient, DATABASE_URL } = require('./helpers/knexClient')
 const databaseLifecycle = require('./helpers/databaseLifecycle')
 const startAuthServer = require('./helpers/startAuthServer')
+const getCookieValues = require('./helpers/getCookieValues')
 
 databaseLifecycle()
 
@@ -24,10 +27,15 @@ it('Register a user connected to an organisation and login', async () => {
     JWT_ORG_CUSTOM_CLAIM: 'user_metadata.org_id',
   })
 
-  const { status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const cookieJar = new toughCookie.CookieJar()
+
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    cookieJar,
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
@@ -35,15 +43,30 @@ it('Register a user connected to an organisation and login', async () => {
   const { id } = await knexClient('users').select('id').where('email', 'lars@domain.com').first()
   await knexClient('user_metadata').insert({ user_id: id, org_id: ORG_ID })
 
-  const { data: loginResponse } = await axios.post(`${url}/login`, {
-    email: 'lars@domain.com',
-    password: 'lars',
+  await got.post(`${url}/login`, {
+    cookieJar,
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+    },
   })
 
-  expect(loginResponse.refresh).toEqual(expect.any(String))
-  expect(loginResponse.jwt_token).toEqual(expect.any(String))
+  const cookieString = await cookieJar.getCookieString(url)
 
-  const [header, payload] = loginResponse.jwt_token.split('.')
+  const {
+    refresh, refreshExpiry, jwtToken, jwtExpiry,
+  } = getCookieValues(cookieString)
+
+  expect(refresh).toEqual(expect.any(String))
+  expect(refresh).toHaveLength(36)
+  expect(jwtToken).toEqual(expect.any(String))
+  expect(jwtExpiry).toBeGreaterThan(Date.now())
+  expect(refreshExpiry).toBeGreaterThan(Date.now())
+
+  // Throws if the signature doesn't match.
+  jwt.verify(jwtToken, 'TEST_JWT_VALUE')
+
+  const [header, payload] = jwtToken.split('.')
 
   const decodedJwtHeader = Buffer.from(header, 'base64').toString('utf-8')
   const decodedJwtPayload = Buffer.from(payload, 'base64').toString('utf-8')
@@ -77,10 +100,15 @@ it('Register a user connected to an organisation and use the refresh token', asy
     JWT_ORG_CUSTOM_CLAIM: 'user_metadata.org_id',
   })
 
-  const { data: registerResponse, status: registerStatus } = await axios.post(`${url}/register`, {
-    email: 'lars@domain.com',
-    password: 'lars',
-    name: 'Lars Larsson',
+  const cookieJar = new toughCookie.CookieJar()
+
+  const { statusCode: registerStatus } = await got.post(`${url}/register`, {
+    cookieJar,
+    json: {
+      email: 'lars@domain.com',
+      password: 'lars',
+      name: 'Lars Larsson',
+    },
   })
 
   expect(registerStatus).toEqual(200)
@@ -88,12 +116,9 @@ it('Register a user connected to an organisation and use the refresh token', asy
   const { id } = await knexClient('users').select('id').where('email', 'lars@domain.com').first()
   await knexClient('user_metadata').insert({ user_id: id, org_id: ORG_ID })
 
-  const { data: refreshResponse } = await axios.post(`${url}/refresh`, {
-    refresh: registerResponse.refresh,
-  })
+  const { statusCode: refreshStatus } = await got.post(`${url}/refresh`, { cookieJar })
 
-  expect(refreshResponse.refresh).toEqual(expect.any(String))
-  expect(refreshResponse.jwt_token).toEqual(expect.any(String))
+  expect(refreshStatus).toBe(200)
 
   server.kill()
 })

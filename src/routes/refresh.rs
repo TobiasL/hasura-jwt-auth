@@ -1,44 +1,53 @@
 use crate::db::refresh_tokens::get_and_delete_refresh_token;
 use crate::db::refresh_tokens::RefreshUserRow;
 use crate::jwt::session::create_session;
+use crate::response::build_response;
 use crate::state::State;
+use actix_web::{error, web, Error, HttpRequest, HttpResponse};
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
-use tide::convert::json;
-use tide::{Error, Request, Response, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct RefreshPayload {
+pub struct RefreshPayload {
     refresh: Uuid,
 }
 
-pub async fn refresh(mut req: Request<State>) -> Result {
-    let db = req.state().db.clone();
-    let jwt_secret = req.state().jwt_secret.clone();
-    let table_conn = req.state().table_conn.clone();
-    let jwt_expires_in_minutes = req.state().jwt_expires_in_minutes.clone();
-    let refresh_expires_in_days = req.state().refresh_expires_in_days.clone();
-    let credentials: RefreshPayload = req.body_json().await?;
+fn get_refresh_cookie(req: HttpRequest) -> Result<Uuid, Error> {
+    let refresh_cookie = req.cookie("refresh");
 
-    match get_and_delete_refresh_token(&db, &table_conn, &credentials.refresh).await? {
-        None => Err(Error::from_str(401, "Refresh token not found")),
+    match refresh_cookie {
+        None => Err(error::ErrorUnauthorized("Refresh token not found")),
+        Some(refresh_value) => {
+            let refresh = Uuid::parse_str(refresh_value.value())
+                .map_err(|_err| error::ErrorUnauthorized("Malformed refresh token"))?;
+
+            Ok(refresh)
+        }
+    }
+}
+
+pub async fn refresh(req: HttpRequest, data: web::Data<State>) -> Result<HttpResponse, Error> {
+    let refresh_uuid = get_refresh_cookie(req)?;
+
+    match get_and_delete_refresh_token(&data.db, &data.table_conn, &refresh_uuid).await? {
+        None => Err(error::ErrorUnauthorized("Refresh token not found")),
         Some(RefreshUserRow {
             user_id,
             default_role,
             org_id,
         }) => {
             let user_session = create_session(
-                &db,
-                &jwt_secret,
-                &jwt_expires_in_minutes,
-                &refresh_expires_in_days,
+                &data.db,
+                &data.jwt_secret,
+                &data.jwt_expires_in_minutes,
+                &data.refresh_expires_in_days,
                 &user_id,
                 &default_role,
                 &org_id,
             )
             .await?;
 
-            Ok(Response::builder(200).body(json!(user_session)).build())
+            Ok(build_response(user_session))
         }
     }
 }

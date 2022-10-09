@@ -4,14 +4,13 @@ use crate::db::reset_password::set_user_ticket;
 use crate::db::reset_password::ResetUserRow;
 use crate::db::users::get_user;
 use crate::state::State;
+use actix_web::{error, web, Error, HttpResponse};
 use bcrypt::hash;
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
-use tide::convert::json;
-use tide::{Request, Response, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
-struct LoginCredentials {
+pub struct LoginCredentials {
     email: String,
 }
 
@@ -26,30 +25,33 @@ struct SendResetTicketPayload {
     ticket: String,
 }
 
-pub async fn reset(mut req: Request<State>) -> Result {
-    let db = req.state().db.clone();
-    let post_reset_password_url = req.state().post_reset_password_url.clone();
-    let credentials: LoginCredentials = req.body_json().await?;
-
-    match get_user(&db, &None, &credentials.email).await? {
-        None => Ok(Response::builder(401).body("User not found").build()),
+pub async fn reset(credentials: web::Json<LoginCredentials>, data: web::Data<State>) -> Result<HttpResponse, Error> {
+    match get_user(&data.db, &None, &credentials.email).await? {
+        None => Ok(HttpResponse::Unauthorized().body("User not found")),
         Some(user) => {
-            let ticket = set_user_ticket(&db, &user.id).await?;
+            let ticket = set_user_ticket(&data.db, &user.id).await?;
             let ticket_payload = SendResetTicketPayload {
                 ticket: ticket.to_string(),
             };
-            match post_reset_password_url {
-                None => Ok(Response::builder(200).body(json!(&ticket_payload)).build()),
+
+            match &data.post_reset_password_url {
+                None => Ok(HttpResponse::Ok().json(&ticket_payload)),
                 Some(url) => {
                     let payload = SendResetEmailPayload {
-                        email: credentials.email,
+                        email: credentials.email.to_string(),
                         ticket: ticket.to_string(),
                     };
 
                     let client = reqwest::Client::new();
-                    client.post(url).json(&payload).send().await?;
 
-                    Ok(Response::builder(200).body(json!(&ticket_payload)).build())
+                    client
+                        .post(url)
+                        .json(&payload)
+                        .send()
+                        .await
+                        .map_err(|_err| error::ErrorInternalServerError("Error posting to POST_RESET_PASSWORD_URL"))?;
+
+                    Ok(HttpResponse::Ok().json(&ticket_payload))
                 }
             }
         }
@@ -57,7 +59,7 @@ pub async fn reset(mut req: Request<State>) -> Result {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct SetCredentials {
+pub struct SetCredentials {
     ticket: Uuid,
     password: String,
 }
@@ -67,29 +69,32 @@ struct SendSetEmailPayload {
     email: String,
 }
 
-pub async fn set(mut req: Request<State>) -> Result {
-    let db = req.state().db.clone();
-    let post_set_password_url = req.state().post_set_password_url.clone();
-    let credentials: SetCredentials = req.body_json().await?;
-
-    let found_user = get_user_ticket(&db, credentials.ticket).await?;
+pub async fn set(credentials: web::Json<SetCredentials>, data: web::Data<State>) -> Result<HttpResponse, Error> {
+    let found_user = get_user_ticket(&data.db, credentials.ticket).await?;
 
     match found_user {
-        None => Ok(Response::builder(401).body("Ticket not found").build()),
+        None => Ok(HttpResponse::Unauthorized().body("Ticket not found")),
         Some(ResetUserRow { id, email }) => {
-            let hashed_password = hash(credentials.password, 10)?;
+            let hashed_password = hash(&credentials.password, 10)
+                .map_err(|_err| error::ErrorInternalServerError("Error hashing password"))?;
 
-            set_user_password(&db, id, hashed_password).await?;
+            set_user_password(&data.db, id, hashed_password).await?;
 
-            match post_set_password_url {
-                None => Ok(Response::builder(200).build()),
+            match &data.post_set_password_url {
+                None => Ok(HttpResponse::Ok().finish()),
                 Some(url) => {
                     let payload = SendSetEmailPayload { email };
 
                     let client = reqwest::Client::new();
-                    client.post(url).json(&payload).send().await?;
 
-                    Ok(Response::builder(200).build())
+                    client
+                        .post(url)
+                        .json(&payload)
+                        .send()
+                        .await
+                        .map_err(|_err| error::ErrorInternalServerError("Error posting to POST_SET_PASSWORD_URL"))?;
+
+                    Ok(HttpResponse::Ok().finish())
                 }
             }
         }

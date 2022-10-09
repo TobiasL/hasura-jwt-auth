@@ -7,18 +7,7 @@ const startAuthServer = require('./helpers/startAuthServer')
 
 databaseLifecycle()
 
-it('Use a non existing refresh token', async () => {
-  const { url, server } = await startAuthServer({
-    JWT_SECRET: 'TEST_JWT_VALUE',
-    DATABASE_URL,
-  })
-
-  await expect(async () => got.post(`${url}/refresh`)).rejects.toThrow('Response code 401 (Unauthorized)')
-
-  server.kill()
-})
-
-it('Ensure that the refresh token is invalidated after usage', async () => {
+it('Logout and make sure that the cookies are removed', async () => {
   const { url, server } = await startAuthServer({
     JWT_SECRET: 'TEST_JWT_VALUE',
     DATABASE_URL,
@@ -35,12 +24,7 @@ it('Ensure that the refresh token is invalidated after usage', async () => {
     },
   })
 
-  const cookies = await cookieJar.getCookies(url)
-  const oldRefreshCookie = cookies.find((cookie) => cookie.toString().includes('refresh='))
-
-  await got.post(`${url}/refresh`, { cookieJar })
-
-  await cookieJar.setCookie(oldRefreshCookie, url)
+  await got.post(`${url}/logout`, { cookieJar })
 
   await expect(async () => {
     await got.post(`${url}/refresh`, { cookieJar })

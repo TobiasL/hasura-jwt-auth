@@ -1,7 +1,7 @@
+use actix_web::{error, Error};
 use jwt_simple::prelude::*;
 use sqlx::types::Uuid;
 use sqlx::PgPool;
-use tide::Result;
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
 struct TicketRow {
@@ -14,8 +14,12 @@ const SET_USER_TICKET_QUERY: &str = "
     WHERE id = $1 RETURNING ticket;
 ";
 
-pub async fn set_user_ticket(db: &PgPool, user_id: &Uuid) -> Result<Uuid> {
-    let ticket: TicketRow = sqlx::query_as(SET_USER_TICKET_QUERY).bind(user_id).fetch_one(db).await?;
+pub async fn set_user_ticket(db: &PgPool, user_id: &Uuid) -> Result<Uuid, Error> {
+    let ticket: TicketRow = sqlx::query_as(SET_USER_TICKET_QUERY)
+        .bind(user_id)
+        .fetch_one(db)
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     Ok(ticket.ticket)
 }
@@ -31,9 +35,12 @@ const GET_TICKET_USER_QUERY: &str = "
     WHERE ticket_expires_at > CURRENT_TIMESTAMP AND ticket = $1;
 ";
 
-pub async fn get_user_ticket(db: &PgPool, ticket: Uuid) -> Result<Option<ResetUserRow>> {
-    let found_user: Option<ResetUserRow> =
-        sqlx::query_as(GET_TICKET_USER_QUERY).bind(ticket).fetch_optional(db).await?;
+pub async fn get_user_ticket(db: &PgPool, ticket: Uuid) -> Result<Option<ResetUserRow>, Error> {
+    let found_user: Option<ResetUserRow> = sqlx::query_as(GET_TICKET_USER_QUERY)
+        .bind(ticket)
+        .fetch_optional(db)
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     Ok(found_user)
 }
@@ -44,12 +51,13 @@ const SET_NEW_PASSWORD_QUERY: &str = "
     WHERE id = $2;
 ";
 
-pub async fn set_user_password(db: &PgPool, user_id: Uuid, hashed_password: String) -> Result<()> {
+pub async fn set_user_password(db: &PgPool, user_id: Uuid, hashed_password: String) -> Result<(), Error> {
     sqlx::query(SET_NEW_PASSWORD_QUERY)
         .bind(hashed_password)
         .bind(user_id)
         .execute(db)
-        .await?;
+        .await
+        .map_err(|_err| error::ErrorInternalServerError("Error querying database"))?;
 
     Ok(())
 }
