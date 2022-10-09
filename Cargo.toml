@@ -5,11 +5,11 @@ authors = ["Tobias Lindström <me@tobiaslindstrom.se>"]
 edition = "2018"
 
 [dependencies]
-sqlx = { version = "0.5", features = ["runtime-async-std-native-tls", "postgres", "json", "uuid"] }
+sqlx = { version = "0.6.2", features = ["runtime-async-std-native-tls", "postgres", "json", "uuid"] }
 tide = "0.16.0"
 async-std = { version = "1.8.0", features = ["attributes"] }
 serde = { version = "1.0", features = ["derive"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
+uuid = { version = "1.2.1", features = ["serde", "v4"] }
 jwt-simple = "0.10.9"
 bcrypt = "0.12"
 surf = { version = "2.3.2", features = ["hyper-client"] }
