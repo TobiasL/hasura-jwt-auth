@@ -1,6 +1,6 @@
 [package]
 name = "hasura-jwt-auth"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Tobias Lindström <me@tobiaslindstrom.se>"]
 edition = "2018"
 repository = "https://github.com/TobiasL/hasura-jwt-auth"
